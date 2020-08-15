@@ -28,10 +28,17 @@ namespace PikaNoteAPI.Controllers
                 return NotFound();
             }
 
+            var note = await _noteService.GetNoteById(id);
+
+            if (note == null)
+            {
+                return NotFound();
+            }
+            
             var apiResponse = new ApiResponse
             {
                 Success = true,
-                Payload = await _noteService.GetNoteById(id)
+                Payload = 
             };
             return Ok(apiResponse);
         }
