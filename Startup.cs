@@ -1,16 +1,10 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using PikaNoteAPI.Data;
 using PikaNoteAPI.Services;
 
@@ -28,9 +22,12 @@ namespace PikaNoteAPI
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            var connString = Configuration.GetConnectionString("DefaultConnection");
             services.AddControllers();
             services.AddDbContext<MainDbContext>(options =>
-                options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
+                options.UseNpgsql(
+                    Environment.GetEnvironmentVariable("POSTGRESQLCONNSTR_DefaultConnection") 
+                    ?? connString));
             services.AddTransient<INoteService, NoteService>();
         }
 
