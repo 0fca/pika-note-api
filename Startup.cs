@@ -22,18 +22,30 @@ namespace PikaNoteAPI
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddCors(options => options.AddPolicy("Base",builder =>
+            {
+                builder
+                    .WithOrigins("http://localhost:8080", "https://note.lukas-bownik.net")
+                    .AllowAnyMethod()
+                    .AllowAnyHeader()
+                    .AllowCredentials();
+            }));
+            
             var connString = Configuration.GetConnectionString("DefaultConnection");
-            services.AddControllers();
+            
             services.AddDbContext<MainDbContext>(options =>
                 options.UseNpgsql(
                     Environment.GetEnvironmentVariable("POSTGRESQLCONNSTR_DefaultConnection") 
                     ?? connString));
             services.AddTransient<INoteService, NoteService>();
+            
+            services.AddControllers();
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            app.UseRouting();
+            app.UseCors("Base");
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -41,10 +53,8 @@ namespace PikaNoteAPI
 
             app.UseHttpsRedirection();
 
-            app.UseRouting();
-
             app.UseAuthorization();
-
+            
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();

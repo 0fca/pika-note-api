@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using PikaNoteAPI.Data;
 using PikaNoteAPI.Models;
@@ -11,6 +11,7 @@ namespace PikaNoteAPI.Controllers
     [ApiController]
     [Route("/")]
     [Consumes("application/json")]
+    [EnableCors("Base")]
     public class NoteController : Controller
     {
         private readonly INoteService _noteService;
