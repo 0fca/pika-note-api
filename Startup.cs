@@ -30,7 +30,7 @@ namespace PikaNoteAPI
         {
             services.AddControllers();
             services.AddDbContext<MainDbContext>(options =>
-                options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
+                options.UseNpgsql("Server=pikanoteapidb.postgres.database.azure.com;Database=pika_note_api_db;Port=5432;User Id=pgsqlsuperuser@pikanoteapidb;Password=QTkzRDg3RTcwNTc2NDY3OEMwMkQ3Q0FDMTU1OUFCQTI5RjNEMzg5MDMyRUM4QjI2Q0U3Q0E2NTI3RkI5NjAyRg==;Ssl Mode=Require;"));
             services.AddTransient<INoteService, NoteService>();
         }
 
