@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using PikaNoteAPI.Data;
@@ -58,26 +59,55 @@ namespace PikaNoteAPI.Controllers
                 return StatusCode(500, apiResponse);
             }
         }
+        
+        [HttpDelete]
+        [Route("{id}/remove")]
+        public async Task<IActionResult> Remove(int? id)
+        {
+            if (id == null)
+            {
+                return BadRequest();
+            }
+            var apiResponse = new ApiResponse();
+            try
+            {
+                if (!await _noteService.Remove(id)) return NotFound();
+                
+                apiResponse.Message = "Successfully deleted note.";
+                return Ok(apiResponse);
+
+            }
+            catch(Exception ex)
+            {
+                Console.Write(ex.Message);
+                apiResponse.Success = false;
+                apiResponse.Message = "Couldn't remove note.";
+                return StatusCode(500, apiResponse);
+            }
+        }
 
         [HttpGet]
-        [Route("list/filter/{date}")]
-        public IActionResult FindByDate(DateTime date)
+        [Route("notes/{date}")]
+        public async Task<IActionResult> FindByDate(string date)
         {
-            return StatusCode(501, new ApiResponse()
+            var dateTime = DateTime.Parse(date);
+            return Ok(new ApiResponse()
             {
-                Message = "Feature not implemented",
-                Success = true
+                Success = true,
+                Payload = await _noteService.FindByDate(dateTime)
             });
         }
 
         [HttpGet]
-        [Route("list")]
-        public IActionResult List()
+        [Route("notes")]
+        public async Task<IActionResult> List([FromQuery] int order = 0, 
+            [FromQuery] int count = 10)
         {
-            return StatusCode(501, new ApiResponse()
+            return Ok(new ApiResponse()
             {
-                Message = "Feature not implemented",
-                Success = true
+                Message = "All notes retrieved successfully.",
+                Success = true,
+                Payload = await _noteService.GetNotes(order, count)
             });
         }
     }

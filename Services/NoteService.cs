@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using PikaNoteAPI.Data;
 
 namespace PikaNoteAPI.Services
@@ -22,11 +23,16 @@ namespace PikaNoteAPI.Services
             return note.Entity.Id;
         }
 
-        public async Task Remove(Note n)
+        public async Task<bool> Remove(int? id)
         {
-            n = await _main.Notes.FindAsync(n.Id);
-            _main.Notes.Remove(n);
+            var note = await _main.Notes.FindAsync(id);
+            if (note == null)
+            {
+                return false;
+            }
+            _main.Notes.Remove(note);
             await _main.SaveChangesAsync();
+            return true;
         }
 
         public async Task RemoveLast()
@@ -38,7 +44,7 @@ namespace PikaNoteAPI.Services
 
         public async Task<IList<Note>> FindByDate(DateTime d)
         {
-            throw new NotImplementedException();
+            return await _main.Notes.Where(n => n.Timestamp.Date.Equals(d.Date)).ToListAsync();
         }
 
         public async Task<Note> GetNoteById(int? id)
@@ -46,9 +52,17 @@ namespace PikaNoteAPI.Services
             return await _main.Notes.FindAsync(id);
         }
 
-        public async Task<IList<Note>> GetAllNotes()
+        public async Task<IList<Note>> GetNotes(int order, int count)
         {
-            throw new NotImplementedException();
+            var noteList = _main.Notes.AsQueryable();
+
+            if (order == 1)
+            { 
+                noteList = noteList.OrderByDescending(n => n.Id);
+            }
+
+            noteList = noteList.Take(count);
+            return await noteList.ToListAsync();
         }
     }
 }

@@ -8,10 +8,10 @@ namespace PikaNoteAPI.Services
     public interface INoteService
     {
         Task<int> Add(Note n);
-        Task Remove(Note n);
+        Task<bool> Remove(int? id);
         Task RemoveLast();
         Task<IList<Note>> FindByDate(DateTime d);
         Task<Note> GetNoteById(int? id);
-        Task<IList<Note>> GetAllNotes();
+        Task<IList<Note>> GetNotes(int order, int count);
     }
 }
