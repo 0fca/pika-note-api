@@ -74,7 +74,7 @@ namespace PikaNoteAPI.Services
 
         public async Task<IList<Note>> GetNotes(int order, int count)
         {
-            var noteList = _main.Notes.OrderBy(n => n.Timestamp).AsQueryable();
+            var noteList = _main.Notes.OrderByDescending(n => n.Timestamp).AsQueryable();
 
             if (order == 1)
             { 
