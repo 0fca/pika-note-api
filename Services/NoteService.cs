@@ -18,7 +18,7 @@ namespace PikaNoteAPI.Services
         
         public async Task<int> Add(Note n)
         {
-            var note = _main.Notes.Update(n);
+            var note = await _main.Notes.AddAsync(n);
             await _main.SaveChangesAsync();
             return note.Entity.Id;
         }
@@ -32,6 +32,26 @@ namespace PikaNoteAPI.Services
             }
             _main.Notes.Remove(note);
             await _main.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> Update(Note n)
+        {
+            try
+            {
+                var note = await GetNoteById(n.Id);
+                note.Name = n.Name;
+                note.Content = n.Content;
+                note.Timestamp = DateTime.Now;
+                _main.Notes.Update(note);
+                await _main.SaveChangesAsync();
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return false;
+            }
+
             return true;
         }
 
@@ -54,7 +74,7 @@ namespace PikaNoteAPI.Services
 
         public async Task<IList<Note>> GetNotes(int order, int count)
         {
-            var noteList = _main.Notes.AsQueryable();
+            var noteList = _main.Notes.OrderByDescending(n => n.Timestamp).AsQueryable();
 
             if (order == 1)
             { 
