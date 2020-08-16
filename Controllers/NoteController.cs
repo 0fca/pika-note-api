@@ -88,11 +88,24 @@ namespace PikaNoteAPI.Controllers
             }
             catch(Exception ex)
             {
-                Console.Write(ex.Message);
                 apiResponse.Success = false;
                 apiResponse.Message = "Couldn't remove note.";
                 return StatusCode(500, apiResponse);
             }
+        }
+        
+        [HttpPut]
+        [Route("notes/{id}/update")]
+        public async Task<IActionResult> Update([FromBody]Note note, int id)
+        {
+            if (note == null)
+            {
+                return BadRequest();
+            }
+
+            note.Id = id;
+            if (!await _noteService.Update(note)) return NotFound();
+            return Ok(new ApiResponse {Success = true, Message = "Updated note."});
         }
 
         [HttpGet]
