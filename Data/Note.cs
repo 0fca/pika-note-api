@@ -10,7 +10,6 @@ namespace PikaNoteAPI.Data
     {
         [Key]
         [Column("id")]
-        [JsonIgnore]
         public int Id { get; set; }
         
         [Column("name")]
