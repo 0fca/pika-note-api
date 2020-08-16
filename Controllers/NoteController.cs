@@ -9,7 +9,7 @@ using PikaNoteAPI.Services;
 namespace PikaNoteAPI.Controllers
 {
     [ApiController]
-    [Route("/")]
+    [Route("/notes")]
     [Consumes("application/json")]
     [EnableCors("Base")]
     public class NoteController : Controller
@@ -21,7 +21,7 @@ namespace PikaNoteAPI.Controllers
         }
 
         [HttpGet]
-        [Route("{id?}")]
+        [Route("{id?}/view")]
         public async Task<IActionResult> Index(int? id)
         {
             if (id == null)
@@ -70,7 +70,7 @@ namespace PikaNoteAPI.Controllers
         }
         
         [HttpDelete]
-        [Route("{id}/remove")]
+        [Route("{id?}/remove")]
         public async Task<IActionResult> Remove(int? id)
         {
             if (id == null)
@@ -95,7 +95,7 @@ namespace PikaNoteAPI.Controllers
         }
         
         [HttpPut]
-        [Route("notes/{id}/update")]
+        [Route("{id}/update")]
         public async Task<IActionResult> Update([FromBody]Note note, int id)
         {
             if (note == null)
@@ -109,19 +109,26 @@ namespace PikaNoteAPI.Controllers
         }
 
         [HttpGet]
-        [Route("notes/{date}")]
+        [Route("{date}")]
         public async Task<IActionResult> FindByDate(string date)
         {
-            var dateTime = DateTime.Parse(date);
-            return Ok(new ApiResponse()
+            try
             {
-                Success = true,
-                Payload = await _noteService.FindByDate(dateTime)
-            });
+                var dateTime = DateTime.Parse(date);
+                return Ok(new ApiResponse()
+                {
+                    Success = true,
+                    Payload = await _noteService.FindByDate(dateTime)
+                });
+            }
+            catch
+            {
+                return BadRequest();
+            }
         }
 
         [HttpGet]
-        [Route("notes")]
+        [Route("/notes/")]
         public async Task<IActionResult> List([FromQuery] int order = 0, 
             [FromQuery] int count = 10)
         {
