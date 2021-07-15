@@ -2,87 +2,69 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using PikaNoteAPI.Data;
+using PikaNoteAPI.Repositories;
 
 namespace PikaNoteAPI.Services
 {
     public class NoteService : INoteService
     {
-        private readonly MainDbContext _main;
-
-        public NoteService(MainDbContext main)
+        private readonly NoteRepository _noteRepository;
+         
+        public NoteService(NoteRepository noteRepository)
         {
-            _main = main;
+            this._noteRepository = noteRepository;
         }
         
-        public async Task<int> Add(Note n)
+        public async Task<string> Add(Note n)
         {
-            var note = await _main.Notes.AddAsync(n);
-            await _main.SaveChangesAsync();
-            return note.Entity.Id;
+            var note = await _noteRepository.AddAsync(n);
+            return note.Id;
         }
 
-        public async Task<bool> Remove(int? id)
-        {
-            var note = await _main.Notes.FindAsync(id);
-            if (note == null)
-            {
-                return false;
-            }
-            _main.Notes.Remove(note);
-            await _main.SaveChangesAsync();
-            return true;
+        public async Task<bool> Remove(string id)
+        { 
+            return (await this._noteRepository.DeleteAsync(id)) != null;
         }
 
         public async Task<bool> Update(Note n)
         {
             try
             {
-                var note = await GetNoteById(n.Id);
-                note.Name = n.Name;
-                note.Content = n.Content;
-                note.Timestamp = DateTime.Now;
-                _main.Notes.Update(note);
-                await _main.SaveChangesAsync();
+                n.Update(await GetNoteById(n.Id));
+                await this._noteRepository.UpdateAsync(n.Id, n);
             }
             catch(Exception ex)
             {
                 Console.WriteLine(ex.Message);
                 return false;
             }
-
             return true;
         }
 
         public async Task RemoveLast()
         {
-            var note = _main.Notes.OrderByDescending(n => n.Timestamp).First();
-            _main.Notes.Remove(note);
-            await _main.SaveChangesAsync();
+            await this._noteRepository.DeleteAsync(this.GetLatest().Id);
+        }
+
+        public Note GetLatest()
+        {
+            return this._noteRepository.GetRange(0, 1, 1).First();
         }
 
         public async Task<IList<Note>> FindByDate(DateTime d)
         {
-            return await _main.Notes.Where(n => n.Timestamp.Date.Equals(d.Date)).ToListAsync();
+            return (await this._noteRepository.GetByDateAsync(d)).ToList();
         }
 
-        public async Task<Note> GetNoteById(int? id)
+        public async Task<Note> GetNoteById(string id)
         {
-            return await _main.Notes.FindAsync(id);
+            return await this._noteRepository.GetByIdAsync(id);
         }
 
-        public async Task<IList<Note>> GetNotes(int order, int count)
+        public IList<Note> GetNotes(int offset = 0, int pageSize = 10, int order = 0)
         {
-            var noteList = _main.Notes.OrderByDescending(n => n.Timestamp).AsQueryable();
-
-            if (order == 1)
-            { 
-                noteList = noteList.OrderByDescending(n => n.Id);
-            }
-
-            noteList = noteList.Take(count);
-            return await noteList.ToListAsync();
+            return this._noteRepository.GetRange(offset, pageSize, order).ToList();
         }
     }
 }

@@ -1,26 +1,27 @@
 ﻿using System;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace PikaNoteAPI.Data
 {
-    [Table("notes")]
     public class Note
     {
-        [Key]
-        [Column("id")]
-        public int Id { get; set; }
-        
-        [Column("name")]
-        [StringLength(50, MinimumLength = 5)]
+        [JsonProperty(PropertyName = "id")]
+        public string Id { get; set; }
+
+        [JsonProperty(PropertyName = "name")]
         public string Name { get; set; }
-        
-        [Column("content")]
-        [StringLength(1024, MinimumLength = 1)]
+
+        [JsonProperty(PropertyName = "content")]
         public string Content { get; set; }
-        
-        [Column("timestamp")]
+
+        [JsonProperty(PropertyName = "timestamp")]
         public DateTime Timestamp { get; set; } = DateTime.Now;
+
+        public void Update(Note n)
+        {
+            this.Name = n.Name;
+            this.Content = n.Content;
+            this.Timestamp = DateTime.Now;
+        }
     }
 }

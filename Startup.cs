@@ -33,10 +33,7 @@ namespace PikaNoteAPI
             
             var connString = Configuration.GetConnectionString("DefaultConnection");
             
-            services.AddDbContext<MainDbContext>(options =>
-                options.UseNpgsql(
-                    Environment.GetEnvironmentVariable("POSTGRESQLCONNSTR_DefaultConnection") 
-                    ?? connString));
+            
             services.AddTransient<INoteService, NoteService>();
             
             services.AddControllers();

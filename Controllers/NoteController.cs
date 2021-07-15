@@ -21,26 +21,22 @@ namespace PikaNoteAPI.Controllers
         }
 
         [HttpGet]
-        [Route("{id?}/view")]
-        public async Task<IActionResult> Index(int? id)
+        [Route("{id}/view")]
+        public async Task<IActionResult> Index(string id)
         {
-            if (id == null)
+            if (string.IsNullOrEmpty(id))
             {
                 return NotFound();
             }
-
             var note = await _noteService.GetNoteById(id);
-
             if (note == null)
             {
                 return NotFound();
             }
-            
             var apiResponse = new ApiResponse
             {
                 Success = true,
                 Payload = note
-
             };
             return Ok(apiResponse);
         }
@@ -58,12 +54,12 @@ namespace PikaNoteAPI.Controllers
             {
                 var id = await _noteService.Add(note);
                 apiResponse.Success = true;
-                apiResponse.Message = "Added note successfully.";
+                apiResponse.Message = "Added note successfully";
                 return Created($"/{id}", apiResponse);
             }
             catch
             {
-                apiResponse.Message = "Some error occurred while adding the note.";
+                apiResponse.Message = "Some error occurred while adding the note";
                 apiResponse.Success = false;
                 return StatusCode(500, apiResponse);
             }
@@ -71,9 +67,9 @@ namespace PikaNoteAPI.Controllers
         
         [HttpDelete]
         [Route("{id?}/remove")]
-        public async Task<IActionResult> Remove(int? id)
+        public async Task<IActionResult> Remove(string id)
         {
-            if (id == null)
+            if (string.IsNullOrEmpty(id))
             {
                 return BadRequest();
             }
@@ -81,31 +77,28 @@ namespace PikaNoteAPI.Controllers
             try
             {
                 if (!await _noteService.Remove(id)) return NotFound();
-                
-                apiResponse.Message = "Successfully deleted note.";
+                apiResponse.Message = "Successfully deleted note";
                 return Ok(apiResponse);
-
             }
             catch(Exception ex)
             {
                 apiResponse.Success = false;
-                apiResponse.Message = "Couldn't remove note.";
+                apiResponse.Message = "Couldn't remove note";
                 return StatusCode(500, apiResponse);
             }
         }
         
         [HttpPut]
         [Route("{id}/update")]
-        public async Task<IActionResult> Update([FromBody]Note note, int id)
+        public async Task<IActionResult> Update([FromBody]Note note, string id)
         {
             if (note == null)
             {
                 return BadRequest();
             }
-
             note.Id = id;
             if (!await _noteService.Update(note)) return NotFound();
-            return Ok(new ApiResponse {Success = true, Message = "Updated note."});
+            return Ok(new ApiResponse {Success = true, Message = "Updated note"});
         }
 
         [HttpGet]
@@ -129,14 +122,17 @@ namespace PikaNoteAPI.Controllers
 
         [HttpGet]
         [Route("/notes/")]
-        public async Task<IActionResult> List([FromQuery] int order = 0, 
-            [FromQuery] int count = 10)
+        public IActionResult List(
+                            [FromQuery] int offset = 0, 
+                            [FromQuery] int pageSize = 10, 
+                            [FromQuery] int order = 0
+            )
         {
             return Ok(new ApiResponse()
             {
-                Message = "All notes retrieved successfully.",
+                Message = "All notes retrieved successfully",
                 Success = true,
-                Payload = await _noteService.GetNotes(order, count)
+                Payload = _noteService.GetNotes(offset, pageSize, order)
             });
         }
     }
