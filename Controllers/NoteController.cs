@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
@@ -21,7 +22,7 @@ namespace PikaNoteAPI.Controllers
         }
 
         [HttpGet]
-        [Route("{id}/view")]
+        [Route("{id}")]
         public async Task<IActionResult> Index(string id)
         {
             if (string.IsNullOrEmpty(id))
@@ -29,6 +30,7 @@ namespace PikaNoteAPI.Controllers
                 return NotFound();
             }
             var note = await _noteService.GetNoteById(id);
+            
             if (note == null)
             {
                 return NotFound();
@@ -47,7 +49,7 @@ namespace PikaNoteAPI.Controllers
         {
             if (note == null)
             {
-                return BadRequest();
+                return BadRequest("Note is null");
             }
             var apiResponse = new ApiResponse();
             try
@@ -102,37 +104,27 @@ namespace PikaNoteAPI.Controllers
         }
 
         [HttpGet]
-        [Route("{date}")]
-        public async Task<IActionResult> FindByDate(string date)
-        {
-            try
-            {
-                var dateTime = DateTime.Parse(date);
-                return Ok(new ApiResponse()
-                {
-                    Success = true,
-                    Payload = await _noteService.FindByDate(dateTime)
-                });
-            }
-            catch
-            {
-                return BadRequest();
-            }
-        }
-
-        [HttpGet]
         [Route("/notes/")]
-        public IActionResult List(
+        public async Task<IActionResult> List(
                             [FromQuery] int offset = 0, 
                             [FromQuery] int pageSize = 10, 
-                            [FromQuery] int order = 0
+                            [FromQuery] int order = 0,
+                            [FromQuery] string date = null
             )
         {
-            return Ok(new ApiResponse()
+            var notes = _noteService.GetNotes(offset, pageSize, order);
+            if (string.IsNullOrEmpty(date))
+                return Ok(new ApiResponse
+                {
+                    Message = "All notes retrieved successfully",
+                    Success = true,
+                    Payload = notes
+                });
+            return Ok(new ApiResponse
             {
-                Message = "All notes retrieved successfully",
+                Message = $"All notes by date {date} retrieved successfully",
                 Success = true,
-                Payload = _noteService.GetNotes(offset, pageSize, order)
+                Payload = await _noteService.FindByDate(DateTime.Parse(date), notes)
             });
         }
     }

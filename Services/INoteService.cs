@@ -12,7 +12,7 @@ namespace PikaNoteAPI.Services
 
         Task<bool> Update(Note n);
         Task RemoveLast();
-        Task<IList<Note>> FindByDate(DateTime d);
+        Task<IList<Note>> FindByDate(DateTime d, IList<Note> notes = null);
         Task<Note> GetNoteById(string id);
         IList<Note> GetNotes(int offset, int pageSize, int order);
     }

@@ -15,13 +15,13 @@ namespace PikaNoteAPI.Data
         public string Content { get; set; }
 
         [JsonProperty(PropertyName = "timestamp")]
-        public DateTime Timestamp { get; set; } = DateTime.Now;
+        public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 
         public void Update(Note n)
         {
             this.Name = n.Name;
             this.Content = n.Content;
-            this.Timestamp = DateTime.Now;
+            this.Timestamp = DateTime.UtcNow;
         }
     }
 }

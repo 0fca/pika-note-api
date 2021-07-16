@@ -21,20 +21,27 @@ namespace PikaNoteAPI.Repositories
 
         public async Task<Note> AddAsync(Note item)
         {
-            return (await this._container.CreateItemAsync<Note>(item, new PartitionKey(item.Id))).Resource;
+            return (await this._container.CreateItemAsync(item)).Resource;
         }
 
         public async Task<Note> DeleteAsync(string id)
         { 
-            return (await this._container.DeleteItemAsync<Note>(id, new PartitionKey(id))).Resource;
+            return (await this._container.DeleteItemAsync<Note>(id, new PartitionKey("pikanotes_partition"))).Resource;
         }
 
-        public async Task<IEnumerable<Note>> GetByDateAsync(DateTime timestamp)
+        public async Task<IEnumerable<Note>> GetByDateAsync(DateTime timestamp, IList<Note> notes = null)
         {
-            var query = this._container.GetItemQueryIterator<Note>(
-                new QueryDefinition($"SELECT * FROM c WHERE c.timestamp = {timestamp}")
-                );
+            if (notes != null)
+            {
+                return notes.ToList().FindAll(n => n.Timestamp == timestamp);
+            }
             var results = new List<Note>();
+            var t = timestamp.ToString("O");
+            var query = this._container.GetItemQueryIterator<Note>(
+                new QueryDefinition($"SELECT * FROM c WHERE DateTimePart('year', c.timestamp) = DateTimePart('year', '{t}') AND " +
+                                    $"DateTimePart('month', c.timestamp) = DateTimePart('month', '{t}') AND " +
+                                    $"DateTimePart('day', c.timestamp) = DateTimePart('day', '{t}')")
+                );
             while (query.HasMoreResults)
             {
                 var response = await query.ReadNextAsync();
@@ -47,7 +54,7 @@ namespace PikaNoteAPI.Repositories
         {
             try
             {
-                var response = await this._container.ReadItemAsync<Note>(id, new PartitionKey(id));
+                var response = await this._container.ReadItemAsync<Note>(id, new PartitionKey("pikanotes_partition"));
                 return response.Resource;
             }
             catch (CosmosException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
@@ -58,12 +65,12 @@ namespace PikaNoteAPI.Repositories
 
         public async Task UpdateAsync(string id, Note item)
         {
-            await this._container.UpsertItemAsync(item, new PartitionKey(id));
+            await this._container.UpsertItemAsync(item);
         }
 
         public IEnumerable<Note> GetRange(int offset = 0, int pageSize = 10, int order = 0)
         {
-            var queryable = this._container.GetItemLinqQueryable<Note>().AsQueryable();
+            var queryable = this._container.GetItemLinqQueryable<Note>(true).AsQueryable();
             if (order == 1)
             { 
                 queryable = queryable.Reverse();

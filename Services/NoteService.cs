@@ -10,12 +10,12 @@ namespace PikaNoteAPI.Services
     public class NoteService : INoteService
     {
         private readonly NoteRepository _noteRepository;
-         
+
         public NoteService(NoteRepository noteRepository)
         {
             this._noteRepository = noteRepository;
         }
-        
+
         public async Task<string> Add(Note n)
         {
             var note = await _noteRepository.AddAsync(n);
@@ -23,7 +23,7 @@ namespace PikaNoteAPI.Services
         }
 
         public async Task<bool> Remove(string id)
-        { 
+        {
             return (await this._noteRepository.DeleteAsync(id)) != null;
         }
 
@@ -34,11 +34,12 @@ namespace PikaNoteAPI.Services
                 n.Update(await GetNoteById(n.Id));
                 await this._noteRepository.UpdateAsync(n.Id, n);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
                 return false;
             }
+
             return true;
         }
 
@@ -52,7 +53,7 @@ namespace PikaNoteAPI.Services
             return this._noteRepository.GetRange(0, 1, 1).First();
         }
 
-        public async Task<IList<Note>> FindByDate(DateTime d)
+        public async Task<IList<Note>> FindByDate(DateTime d, IList<Note> notes)
         {
             return (await this._noteRepository.GetByDateAsync(d)).ToList();
         }
