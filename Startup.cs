@@ -32,8 +32,9 @@ namespace PikaNoteAPI
                     .AllowAnyHeader()
                     .AllowCredentials();
             }));
+            
             services.AddSingleton<INoteService>(
-                InitializeCosmosClientInstanceAsync(Configuration.GetSection("CosmosDb")).GetAwaiter().GetResult());
+                InitializeCosmosClientInstanceAsync(Configuration).GetAwaiter().GetResult());
             services.AddControllers();
         }
 
@@ -45,19 +46,18 @@ namespace PikaNoteAPI
             {
                 app.UseDeveloperExceptionPage();
             }
+            
             app.UseHttpsRedirection();
             app.UseAuthorization();
             app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
         }
 
         private static async Task<NoteService> InitializeCosmosClientInstanceAsync(
-            IConfigurationSection configurationSection)
+            IConfiguration configurationSection)
         {
-            var databaseName = configurationSection.GetSection("DatabaseName").Value;
-            var containerName = configurationSection.GetSection("ContainerName").Value;
-            var account = configurationSection.GetSection("Account").Value;
-            var key = configurationSection.GetSection("Key").Value;
-            var client = new CosmosClient(account, key);
+            var client = new CosmosClient(configurationSection.GetConnectionString("Main"));
+            var databaseName = configurationSection["DatabaseName"];
+            var containerName = configurationSection["ContainerName"];
             var noteRepository = new NoteRepository(client, databaseName, containerName);
             var noteService = new NoteService(noteRepository);
             var database = await client.CreateDatabaseIfNotExistsAsync(databaseName);
