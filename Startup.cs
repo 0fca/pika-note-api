@@ -1,11 +1,14 @@
 using System;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using PikaNoteAPI.Data;
+using PikaNoteAPI.Repositories;
 using PikaNoteAPI.Services;
 
 namespace PikaNoteAPI
@@ -17,12 +20,11 @@ namespace PikaNoteAPI
             Configuration = configuration;
         }
 
-        public IConfiguration Configuration { get; }
+        private IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddCors(options => options.AddPolicy("Base",builder =>
+            services.AddCors(options => options.AddPolicy("Base", builder =>
             {
                 builder
                     .WithOrigins("http://localhost:8080", "https://note.lukas-bownik.net")
@@ -30,15 +32,8 @@ namespace PikaNoteAPI
                     .AllowAnyHeader()
                     .AllowCredentials();
             }));
-            
-            var connString = Configuration.GetConnectionString("DefaultConnection");
-            
-            services.AddDbContext<MainDbContext>(options =>
-                options.UseNpgsql(
-                    Environment.GetEnvironmentVariable("POSTGRESQLCONNSTR_DefaultConnection") 
-                    ?? connString));
-            services.AddTransient<INoteService, NoteService>();
-            
+            services.AddSingleton<INoteService>(
+                InitializeCosmosClientInstanceAsync(Configuration.GetSection("CosmosDb")).GetAwaiter().GetResult());
             services.AddControllers();
         }
 
@@ -50,15 +45,24 @@ namespace PikaNoteAPI
             {
                 app.UseDeveloperExceptionPage();
             }
-
             app.UseHttpsRedirection();
-
             app.UseAuthorization();
-            
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllers();
-            });
+            app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
+        }
+
+        private static async Task<NoteService> InitializeCosmosClientInstanceAsync(
+            IConfigurationSection configurationSection)
+        {
+            var databaseName = configurationSection.GetSection("DatabaseName").Value;
+            var containerName = configurationSection.GetSection("ContainerName").Value;
+            var account = configurationSection.GetSection("Account").Value;
+            var key = configurationSection.GetSection("Key").Value;
+            var client = new CosmosClient(account, key);
+            var noteRepository = new NoteRepository(client, databaseName, containerName);
+            var noteService = new NoteService(noteRepository);
+            var database = await client.CreateDatabaseIfNotExistsAsync(databaseName);
+            await database.Database.CreateContainerIfNotExistsAsync(containerName, "/id");
+            return noteService;
         }
     }
 }

@@ -2,51 +2,40 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using PikaNoteAPI.Data;
+using PikaNoteAPI.Repositories;
 
 namespace PikaNoteAPI.Services
 {
     public class NoteService : INoteService
     {
-        private readonly MainDbContext _main;
+        private readonly NoteRepository _noteRepository;
 
-        public NoteService(MainDbContext main)
+        public NoteService(NoteRepository noteRepository)
         {
-            _main = main;
-        }
-        
-        public async Task<int> Add(Note n)
-        {
-            var note = await _main.Notes.AddAsync(n);
-            await _main.SaveChangesAsync();
-            return note.Entity.Id;
+            this._noteRepository = noteRepository;
         }
 
-        public async Task<bool> Remove(int? id)
+        public async Task<string> Add(Note n)
         {
-            var note = await _main.Notes.FindAsync(id);
-            if (note == null)
-            {
-                return false;
-            }
-            _main.Notes.Remove(note);
-            await _main.SaveChangesAsync();
-            return true;
+            var note = await _noteRepository.AddAsync(n);
+            return note.Id;
+        }
+
+        public async Task<bool> Remove(string id)
+        {
+            return (await this._noteRepository.DeleteAsync(id));
         }
 
         public async Task<bool> Update(Note n)
         {
             try
             {
-                var note = await GetNoteById(n.Id);
-                note.Name = n.Name;
-                note.Content = n.Content;
-                note.Timestamp = DateTime.Now;
-                _main.Notes.Update(note);
-                await _main.SaveChangesAsync();
+                var currentNote = await GetNoteById(n.Id);
+                currentNote.Update(n);
+                await this._noteRepository.UpdateAsync(n.Id, currentNote);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
                 return false;
@@ -57,32 +46,27 @@ namespace PikaNoteAPI.Services
 
         public async Task RemoveLast()
         {
-            var note = _main.Notes.OrderByDescending(n => n.Timestamp).First();
-            _main.Notes.Remove(note);
-            await _main.SaveChangesAsync();
+            await this._noteRepository.DeleteAsync(this.GetLatest().Id);
         }
 
-        public async Task<IList<Note>> FindByDate(DateTime d)
+        public Note GetLatest()
         {
-            return await _main.Notes.Where(n => n.Timestamp.Date.Equals(d.Date)).ToListAsync();
+            return this._noteRepository.GetRange(0, 1, 1).First();
         }
 
-        public async Task<Note> GetNoteById(int? id)
+        public async Task<IList<Note>> FindByDate(DateTime d, IList<Note> notes)
         {
-            return await _main.Notes.FindAsync(id);
+            return (await this._noteRepository.GetByDateAsync(d)).ToList();
         }
 
-        public async Task<IList<Note>> GetNotes(int order, int count)
+        public async Task<Note> GetNoteById(string id)
         {
-            var noteList = _main.Notes.OrderByDescending(n => n.Timestamp).AsQueryable();
+            return await this._noteRepository.GetByIdAsync(id);
+        }
 
-            if (order == 1)
-            { 
-                noteList = noteList.OrderByDescending(n => n.Id);
-            }
-
-            noteList = noteList.Take(count);
-            return await noteList.ToListAsync();
+        public IList<Note> GetNotes(int offset = 0, int pageSize = 10, int order = 0)
+        {
+            return this._noteRepository.GetRange(offset, pageSize, order).ToList();
         }
     }
 }
