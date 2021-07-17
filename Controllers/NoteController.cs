@@ -45,7 +45,7 @@ namespace PikaNoteAPI.Controllers
 
         [HttpPost]
         [Route("/notes")]
-        public async Task<IActionResult> Add([FromBody] Note note)
+        public async Task<IActionResult> Add([FromBody] NoteAddUpdateDto note)
         {
             if (note == null)
             {
@@ -92,14 +92,13 @@ namespace PikaNoteAPI.Controllers
         
         [HttpPut]
         [Route("{id}")]
-        public async Task<IActionResult> Update([FromBody]Note note, string id)
+        public async Task<IActionResult> Update([FromBody]NoteAddUpdateDto note, string id)
         {
             if (note == null)
             {
                 return BadRequest();
             }
-            note.Id = id;
-            if (!await _noteService.Update(note)) return NotFound();
+            if (!await _noteService.Update(note, id)) return NotFound();
             return Ok(new ApiResponse {Success = true, Message = "Updated note"});
         }
 

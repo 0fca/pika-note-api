@@ -7,6 +7,7 @@ using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.OpenApi.Models;
 using PikaNoteAPI.Data;
 using PikaNoteAPI.Repositories;
 using PikaNoteAPI.Services;
@@ -32,7 +33,22 @@ namespace PikaNoteAPI
                     .AllowAnyHeader()
                     .AllowCredentials();
             }));
-            
+            services.AddSwaggerGen(c =>
+                {
+                    c.SwaggerDoc("v1", new OpenApiInfo
+                    {
+                        Title = "PikaNote API",
+                        Version = "v1.0",
+                        Description = "Simple REST API for PikaCloud subsystem PikaNote",
+                        Contact = new OpenApiContact
+                        {
+                            Name = "Arkasian",
+                            Email = "lukasbownik99@gmail.com",
+                            Url = new Uri("https://me.lukas-bownik.net/")
+                        }
+                    });
+                }
+            );
             services.AddSingleton<INoteService>(
                 InitializeCosmosClientInstanceAsync(Configuration).GetAwaiter().GetResult());
             services.AddControllers();
@@ -46,7 +62,8 @@ namespace PikaNoteAPI
             {
                 app.UseDeveloperExceptionPage();
             }
-            
+            app.UseSwagger();
+            app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "PikaNote API")); 
             app.UseHttpsRedirection();
             app.UseAuthorization();
             app.UseEndpoints(endpoints => { endpoints.MapControllers(); });

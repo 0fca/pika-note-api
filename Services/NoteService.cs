@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
 using PikaNoteAPI.Data;
+using PikaNoteAPI.Models;
 using PikaNoteAPI.Repositories;
 
 namespace PikaNoteAPI.Services
@@ -16,9 +18,9 @@ namespace PikaNoteAPI.Services
             this._noteRepository = noteRepository;
         }
 
-        public async Task<string> Add(Note n)
+        public async Task<string> Add(NoteAddUpdateDto n)
         {
-            var note = await _noteRepository.AddAsync(n);
+            var note = await _noteRepository.AddAsync(n.NewNote());
             return note.Id;
         }
 
@@ -27,13 +29,13 @@ namespace PikaNoteAPI.Services
             return (await this._noteRepository.DeleteAsync(id));
         }
 
-        public async Task<bool> Update(Note n)
+        public async Task<bool> Update(NoteAddUpdateDto n, string id)
         {
             try
             {
-                var currentNote = await GetNoteById(n.Id);
-                currentNote.Update(n);
-                await this._noteRepository.UpdateAsync(n.Id, currentNote);
+                var currentNote = await GetNoteById(id);
+                currentNote.Update(n.ToNote(id));
+                await this._noteRepository.UpdateAsync(id, currentNote);
             }
             catch (Exception ex)
             {

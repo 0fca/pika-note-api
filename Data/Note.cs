@@ -13,7 +13,7 @@ namespace PikaNoteAPI.Data
 
         [JsonProperty(PropertyName = "content")]
         public string Content { get; set; }
-
+        
         [JsonProperty(PropertyName = "timestamp")]
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 
@@ -22,6 +22,11 @@ namespace PikaNoteAPI.Data
             this.Name = n.Name;
             this.Content = n.Content;
             this.Timestamp = DateTime.UtcNow;
+        }
+
+        public void GenerateId()
+        {
+            this.Id = Guid.NewGuid().ToString();
         }
     }
 }
