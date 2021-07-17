@@ -44,7 +44,7 @@ namespace PikaNoteAPI.Controllers
         }
 
         [HttpPost]
-        [Route("add")]
+        [Route("/notes")]
         public async Task<IActionResult> Add([FromBody] Note note)
         {
             if (note == null)
@@ -57,7 +57,7 @@ namespace PikaNoteAPI.Controllers
                 var id = await _noteService.Add(note);
                 apiResponse.Success = true;
                 apiResponse.Message = "Added note successfully";
-                return Created($"/{id}", apiResponse);
+                return Created($"/notes/{id}", apiResponse);
             }
             catch
             {
@@ -68,7 +68,7 @@ namespace PikaNoteAPI.Controllers
         }
         
         [HttpDelete]
-        [Route("{id?}/remove")]
+        [Route("{id?}")]
         public async Task<IActionResult> Remove(string id)
         {
             if (string.IsNullOrEmpty(id))
@@ -91,7 +91,7 @@ namespace PikaNoteAPI.Controllers
         }
         
         [HttpPut]
-        [Route("{id}/update")]
+        [Route("{id}")]
         public async Task<IActionResult> Update([FromBody]Note note, string id)
         {
             if (note == null)

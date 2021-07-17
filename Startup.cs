@@ -61,7 +61,7 @@ namespace PikaNoteAPI
             var noteRepository = new NoteRepository(client, databaseName, containerName);
             var noteService = new NoteService(noteRepository);
             var database = await client.CreateDatabaseIfNotExistsAsync(databaseName);
-            await database.Database.CreateContainerIfNotExistsAsync(containerName, "/pikanotes_partition");
+            await database.Database.CreateContainerIfNotExistsAsync(containerName, "/id");
             return noteService;
         }
     }

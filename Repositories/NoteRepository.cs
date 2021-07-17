@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
 using PikaNoteAPI.Data;
@@ -24,9 +25,10 @@ namespace PikaNoteAPI.Repositories
             return (await this._container.CreateItemAsync(item)).Resource;
         }
 
-        public async Task<Note> DeleteAsync(string id)
-        { 
-            return (await this._container.DeleteItemAsync<Note>(id, new PartitionKey("pikanotes_partition"))).Resource;
+        public async Task<bool> DeleteAsync(string id)
+        {
+            return (await this._container.DeleteItemAsync<Note>(id, new PartitionKey(id))).StatusCode 
+                   == HttpStatusCode.NoContent;
         }
 
         public async Task<IEnumerable<Note>> GetByDateAsync(DateTime timestamp, IList<Note> notes = null)
@@ -54,7 +56,7 @@ namespace PikaNoteAPI.Repositories
         {
             try
             {
-                var response = await this._container.ReadItemAsync<Note>(id, new PartitionKey("pikanotes_partition"));
+                var response = await this._container.ReadItemAsync<Note>(id, new PartitionKey(id));
                 return response.Resource;
             }
             catch (CosmosException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)

@@ -24,15 +24,16 @@ namespace PikaNoteAPI.Services
 
         public async Task<bool> Remove(string id)
         {
-            return (await this._noteRepository.DeleteAsync(id)) != null;
+            return (await this._noteRepository.DeleteAsync(id));
         }
 
         public async Task<bool> Update(Note n)
         {
             try
             {
-                n.Update(await GetNoteById(n.Id));
-                await this._noteRepository.UpdateAsync(n.Id, n);
+                var currentNote = await GetNoteById(n.Id);
+                currentNote.Update(n);
+                await this._noteRepository.UpdateAsync(n.Id, currentNote);
             }
             catch (Exception ex)
             {
