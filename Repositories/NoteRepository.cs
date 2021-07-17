@@ -75,7 +75,7 @@ namespace PikaNoteAPI.Repositories
             var queryable = this._container.GetItemLinqQueryable<Note>(true).AsQueryable();
             if (order == 1)
             { 
-                queryable = queryable.Reverse();
+                queryable = queryable.OrderByDescending(n => n.Timestamp);
             }
             return queryable.Skip(offset).Take(pageSize).ToList();
         }
