@@ -1,9 +1,9 @@
 ﻿using System;
-using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
-using PikaNoteAPI.Data;
+using Pika.Domain.Note.DTO;
 using PikaNoteAPI.Models;
 using PikaNoteAPI.Services;
 
@@ -23,6 +23,7 @@ namespace PikaNoteAPI.Controllers
 
         [HttpGet]
         [Route("{id}")]
+        [AllowAnonymous]
         public async Task<IActionResult> Index(string id)
         {
             if (string.IsNullOrEmpty(id))
@@ -45,6 +46,7 @@ namespace PikaNoteAPI.Controllers
 
         [HttpPost]
         [Route("/notes")]
+        [Authorize]
         public async Task<IActionResult> Add([FromBody] NoteAddUpdateDto note)
         {
             if (note == null)
@@ -69,6 +71,7 @@ namespace PikaNoteAPI.Controllers
         
         [HttpDelete]
         [Route("{id?}")]
+        [Authorize(Roles = "Administrator")]
         public async Task<IActionResult> Remove(string id)
         {
             if (string.IsNullOrEmpty(id))
@@ -92,7 +95,8 @@ namespace PikaNoteAPI.Controllers
         
         [HttpPut]
         [Route("{id}")]
-        public async Task<IActionResult> Update([FromBody]NoteAddUpdateDto note, string id)
+        [Authorize]
+        public async Task<IActionResult> Update([FromBody]NoteAddUpdateDto? note, string id)
         {
             if (note == null)
             {
@@ -105,13 +109,14 @@ namespace PikaNoteAPI.Controllers
         [HttpGet]
         [Route("/notes/")]
         public async Task<IActionResult> List(
+                            [FromQuery] string bucketId,
                             [FromQuery] int offset = 0, 
                             [FromQuery] int pageSize = 10, 
                             [FromQuery] int order = 0,
                             [FromQuery] string date = null
             )
         {
-            var notes = _noteService.GetNotes(offset, pageSize, order);
+            var notes = await _noteService.GetNotes(bucketId, offset, pageSize, order);
             if (string.IsNullOrEmpty(date))
                 return Ok(new ApiResponse
                 {

@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using PikaNoteAPI.Data;
+using Pika.Domain.Note.DTO;
+using Pika.Domain.Notes.Data;
 using PikaNoteAPI.Models;
+using PikaNoteAPI.Services.Security;
 
 namespace PikaNoteAPI.Services
 {
@@ -12,9 +14,10 @@ namespace PikaNoteAPI.Services
         Task<bool> Remove(string id);
 
         Task<bool> Update(NoteAddUpdateDto n, string id);
-        Task RemoveLast();
         Task<IList<Note>> FindByDate(DateTime d, IList<Note> notes = null);
         Task<Note> GetNoteById(string id);
-        IList<Note> GetNotes(int offset, int pageSize, int order);
+        Task<IList<Note>> GetNotes(string bucketId, int offset, int pageSize, int order);
+        bool HasSecurityConfigured();
+        internal void ConfigureSecurityService(ISecurityService securityService);
     }
 }
