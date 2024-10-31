@@ -32,11 +32,6 @@ namespace PikaNoteAPI
 
         public void ConfigureServices(IServiceCollection services)
         {
-            /*services.AddStackExchangeRedisCache(opt =>
-            {
-                opt.Configuration = Configuration.GetConnectionString("pkc");
-                opt.InstanceName = Configuration.GetSection("Redis")["InstanceName"];
-            });*/
             services.AddDistributedMemoryCache();
             services.AddAuthentication(o =>
                 {
@@ -48,7 +43,7 @@ namespace PikaNoteAPI
                 options.CheckConsentNeeded = context => true;
                 options.MinimumSameSitePolicy = SameSiteMode.None;
                 options.Secure = CookieSecurePolicy.Always;
-                options.ConsentCookie.Domain = Configuration.GetSection("Auth")["CookieDomain"];
+                options.ConsentCookie.Domain = Configuration["CookieDomain"];
             });
 
             services.AddOpenIddict()
@@ -60,17 +55,17 @@ namespace PikaNoteAPI
                     o.AddRegistration(new OpenIddictClientRegistration
                     {
                         RegistrationId = "base",
-                        ClientId = Configuration.GetSection("Auth")["ClientId"],
-                        ClientSecret = Configuration.GetSection("Auth")["ClientSecret"],
-                        Issuer = new Uri(Configuration.GetSection("Auth")["Authority"], UriKind.Absolute)
+                        ClientId = Configuration["ClientId"],
+                        ClientSecret = Configuration["ClientSecret"],
+                        Issuer = new Uri(Configuration["Authority"], UriKind.Absolute)
                     });
                 })
                 .AddValidation(o =>
                 {
-                    o.SetIssuer(Configuration.GetSection("Auth")["Authority"]);
+                    o.SetIssuer(Configuration["Authority"]);
                     o.UseIntrospection()
-                        .SetClientId(Configuration.GetSection("Auth")["ClientId"])
-                        .SetClientSecret(Configuration.GetSection("Auth")["ClientSecret"]);
+                        .SetClientId(Configuration["ClientId"])
+                        .SetClientSecret(Configuration["ClientSecret"]);
                     o.UseSystemNetHttp();
                     o.UseAspNetCore();
                 });
