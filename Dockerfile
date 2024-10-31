@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build-env
+FROM pikanoteapiacr.azurecr.io/fcapikadomain:25 AS build-env
 WORKDIR /app
 
 # Copy csproj and restore as distinct layers
