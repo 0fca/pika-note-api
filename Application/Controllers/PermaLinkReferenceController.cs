@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
-namespace PikaNoteAPI.Controllers
+namespace PikaNoteAPI.Application.Controllers
 {
     [ApiController]
     [Route("/perma/[action]")]

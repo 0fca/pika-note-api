@@ -1,35 +1,45 @@
 ﻿using System;
-using System.Linq;
+using System.Security.Authentication;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
-using PikaNoteAPI.Data;
+using PikaNoteAPI.Domain.Contract;
+using PikaNoteAPI.Domain.Models.DTO;
 using PikaNoteAPI.Models;
-using PikaNoteAPI.Services;
 
-namespace PikaNoteAPI.Controllers
+namespace PikaNoteAPI.Application.Controllers
 {
     [ApiController]
     [Route("/notes")]
     [Consumes("application/json")]
     [EnableCors("Base")]
-    public class NoteController : Controller
+    public class NotesController : Controller
     {
-        private readonly INoteService _noteService;
-        public NoteController(INoteService noteService)
+        private readonly INotes _notes;
+        private readonly IBuckets _buckets;
+
+        public NotesController(
+            INotes notes,
+            IBuckets buckets
+            )
         {
-            _noteService = noteService;
+            _notes = notes;
+            _buckets = buckets;
         }
 
         [HttpGet]
         [Route("{id}")]
+        [AllowAnonymous]
         public async Task<IActionResult> Index(string id)
         {
             if (string.IsNullOrEmpty(id))
             {
                 return NotFound();
             }
-            var note = await _noteService.GetNoteById(id);
+
+            var token = HttpContext.Request.Cookies[".AspNet.Identity"]!;
+            var note = await _notes.GetNoteByIdAsUser(token, id);
             
             if (note == null)
             {
@@ -45,30 +55,37 @@ namespace PikaNoteAPI.Controllers
 
         [HttpPost]
         [Route("/notes")]
-        public async Task<IActionResult> Add([FromBody] NoteAddUpdateDto note)
+        [Authorize(Roles = "Administrator, Moderator")]
+        public async Task<IActionResult> Add(
+            [FromBody] NoteAddUpdateDto? note,
+            [FromQuery] string bucketId
+            )
         {
             if (note == null)
             {
                 return BadRequest("Note is null");
             }
+            note.UpdateBucketId(bucketId);
             var apiResponse = new ApiResponse();
             try
             {
-                var id = await _noteService.Add(note);
+                var token = HttpContext.Request.Cookies[".AspNet.Identity"]!;
+                var id = await _notes.Add(token, note);
                 apiResponse.Success = true;
                 apiResponse.Message = "Added note successfully";
                 return Created($"/notes/{id}", apiResponse);
             }
-            catch
+            catch(AuthenticationException a)
             {
-                apiResponse.Message = "Some error occurred while adding the note";
+                apiResponse.Message = a.Message;
                 apiResponse.Success = false;
-                return StatusCode(500, apiResponse);
+                return StatusCode(401, apiResponse);
             }
         }
         
         [HttpDelete]
         [Route("{id?}")]
+        [Authorize(Roles = "Administrator")]
         public async Task<IActionResult> Remove(string id)
         {
             if (string.IsNullOrEmpty(id))
@@ -78,7 +95,7 @@ namespace PikaNoteAPI.Controllers
             var apiResponse = new ApiResponse();
             try
             {
-                if (!await _noteService.Remove(id)) return NotFound();
+                if (!await _notes.Remove(id)) return NotFound();
                 apiResponse.Message = "Successfully deleted note";
                 return Ok(apiResponse);
             }
@@ -92,26 +109,36 @@ namespace PikaNoteAPI.Controllers
         
         [HttpPut]
         [Route("{id}")]
-        public async Task<IActionResult> Update([FromBody]NoteAddUpdateDto note, string id)
+        [Authorize(Roles = "Moderator, Administrator")]
+        public async Task<IActionResult> Update([FromBody]NoteAddUpdateDto? note, string id)
         {
             if (note == null)
             {
                 return BadRequest();
             }
-            if (!await _noteService.Update(note, id)) return NotFound();
+
+            var token = HttpContext.Request.Cookies[".AspNet.Identity"];
+            if (!await _notes.UpdateNoteAsUser(note, id, token)) return NotFound();
             return Ok(new ApiResponse {Success = true, Message = "Updated note"});
         }
 
         [HttpGet]
         [Route("/notes/")]
+        [AllowAnonymous]
         public async Task<IActionResult> List(
+                            [FromQuery] string bucketId,
                             [FromQuery] int offset = 0, 
                             [FromQuery] int pageSize = 10, 
                             [FromQuery] int order = 0,
                             [FromQuery] string date = null
             )
         {
-            var notes = _noteService.GetNotes(offset, pageSize, order);
+            var token = HttpContext.Request.Cookies[".AspNet.Identity"]!;
+            if (string.IsNullOrEmpty(token))
+            {
+                return Unauthorized();
+            }
+            var notes = await _notes.GetNotesAsUser(token, bucketId, offset, pageSize, order);
             if (string.IsNullOrEmpty(date))
                 return Ok(new ApiResponse
                 {
@@ -123,8 +150,24 @@ namespace PikaNoteAPI.Controllers
             {
                 Message = $"All notes by date {date} retrieved successfully",
                 Success = true,
-                Payload = await _noteService.FindByDate(DateTime.Parse(date), notes)
+                Payload = await _notes.FindByDate(DateTime.Parse(date), notes)
             });
+        }
+
+        [HttpGet]
+        [ActionName("buckets")]
+        [Route("/[controller]/[action]")]
+        [AllowAnonymous]
+        public async Task<IActionResult> Buckets()
+        {
+            var token = HttpContext.Request.Cookies[".AspNet.Identity"]!;
+            return Ok(
+                new ApiResponse {
+                    Success = true,
+                    Message = "Buckets returned successfully",
+                    Payload = await this._buckets.GetBucketsForTokenAsync(token)
+                }
+            ); 
         }
     }
 }
