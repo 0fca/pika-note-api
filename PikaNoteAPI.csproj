@@ -10,27 +10,24 @@
     <ItemGroup>
         <PackageReference Include="AutoMapper" Version="12.0.1" />
         <PackageReference Include="FromJson" Version="2.0.0" />
-        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.6"/>
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.6" />
         <PackageReference Include="Microsoft.Azure.AppConfiguration.AspNetCore" Version="8.0.0-preview" />
-        <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.41.0"/>
-        <PackageReference Include="OpenIddict" Version="5.6.0"/>
+        <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.41.0" />
+        <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="8.0.6" />
+        <PackageReference Include="OpenIddict" Version="5.6.0" />
         <PackageReference Include="OpenIddict.Client" Version="5.6.0" />
-        <PackageReference Include="OpenIddict.Validation.AspNetCore" Version="5.6.0"/>
-        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.3.1"/>
+        <PackageReference Include="OpenIddict.Validation.AspNetCore" Version="5.6.0" />
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.3.1" />
     </ItemGroup>
 
     <ItemGroup>
-        <_ContentIncludedByDefault Remove="ConsoleApp1\ConsoleApp1\obj\ConsoleApp1.csproj.nuget.dgspec.json"/>
-        <_ContentIncludedByDefault Remove="ConsoleApp1\ConsoleApp1\obj\project.assets.json"/>
-        <_ContentIncludedByDefault Remove="ConsoleApp1\ConsoleApp1\obj\project.packagespec.json"/>
+        <_ContentIncludedByDefault Remove="ConsoleApp1\ConsoleApp1\obj\ConsoleApp1.csproj.nuget.dgspec.json" />
+        <_ContentIncludedByDefault Remove="ConsoleApp1\ConsoleApp1\obj\project.assets.json" />
+        <_ContentIncludedByDefault Remove="ConsoleApp1\ConsoleApp1\obj\project.packagespec.json" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Pika.Domain\Pika.Domain.csproj"/>
-    </ItemGroup>
-
-    <ItemGroup>
-        <Folder Include="Adapters\Database"/>
+        <ProjectReference Include="..\Pika.Domain\Pika.Domain.csproj" />
     </ItemGroup>
 
 

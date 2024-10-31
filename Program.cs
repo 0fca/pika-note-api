@@ -28,7 +28,7 @@ namespace PikaNoteAPI
                         {
                             options.Limits.MaxRequestBodySize = 268435456;
                         })
-                        .UseUrls($"http://api-note.cloud.localhost:{args[0]}", $"https://api-note.cloud.localhost:{int.Parse(args[0]) + 1}")
+                        .UseUrls($"http://note.cloud.localhost:{args[0]}", $"https://note.cloud.localhost:{int.Parse(args[0]) + 1}")
                         .UseKestrel();
                 });
     }
