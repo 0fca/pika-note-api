@@ -19,6 +19,7 @@ public class EnsureJwtBearerValidMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
+        var gatewayUrl = _configuration.GetConnectionString("PikaCoreGateway");
         var token = context.Request.Cookies[".AspNet.Identity"];
         if (string.IsNullOrEmpty(token))
         {
@@ -35,7 +36,7 @@ public class EnsureJwtBearerValidMiddleware
         {
             var returnUrl = context.Request.Path;
             context.Response.Cookies.Delete(".AspNet.Identity");
-            context.Response.Redirect($"http://127.0.0.1:5000/Identity/Gateway/Login?returnUrl={returnUrl}");
+            context.Response.Redirect($"{gatewayUrl}?returnUrl={returnUrl}");
             return;
         }
         await _next(context);

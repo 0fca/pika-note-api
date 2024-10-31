@@ -19,8 +19,8 @@ public class SecurityController : Controller
     [HttpPost]
     public IActionResult LocalLogin()
     {
-        var redirectUrl = _configuration.GetSection("OIDC")["RedirectUrl"];
-        var callbackUrl = _configuration.GetSection("OIDC")["CallbackUrl"];
+        var redirectUrl = _configuration["RedirectUrl"];
+        var callbackUrl = _configuration["CallbackUrl"];
         return Redirect($"{redirectUrl}?returnUrl={callbackUrl}");
     }
 
