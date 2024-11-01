@@ -123,7 +123,7 @@ namespace PikaNoteAPI
 
             app.UseSwagger();
             app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "PikaNote API"));
-            app.UseHttpsRedirection();
+            //app.UseHttpsRedirection();
             app.UseAuthorization();
             app.UseMiddleware<NoteFileStorageSecurity>();
             app.UseEndpoints(endpoints =>
