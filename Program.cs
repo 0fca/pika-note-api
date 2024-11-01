@@ -33,7 +33,7 @@ namespace PikaNoteAPI
                             webBuilder = webBuilder.UseUrls($"http://note.cloud.localhost:{args[0]}", $"https://note.cloud.localhost:{int.Parse(args[0]) + 1}");
                         } else 
                         {
-                            webBuilder = webBuilder.UseUrls($"http://note.cloud.localhost:{args[0]}");
+                            webBuilder = webBuilder.UseUrls($"http://note.cloud.localhost");
                         }
                     webBuilder.UseKestrel();
                 });
