@@ -73,6 +73,9 @@ namespace PikaNoteAPI.Application.Controllers
                 var id = await _notes.Add(token, note);
                 apiResponse.Success = true;
                 apiResponse.Message = "Added note successfully";
+                apiResponse.Payload = new { 
+                    Id = id
+                };
                 return Created($"/notes/{id}", apiResponse);
             }
             catch(AuthenticationException a)
@@ -119,7 +122,15 @@ namespace PikaNoteAPI.Application.Controllers
 
             var token = HttpContext.Request.Cookies[".AspNet.Identity"];
             if (!await _notes.UpdateNoteAsUser(note, id, token)) return NotFound();
-            return Ok(new ApiResponse {Success = true, Message = "Updated note"});
+            return Ok(new ApiResponse
+            {
+                Success = true,
+                Message = "Updated note",
+                Payload = new
+                {
+                    Id = id
+                }
+            });
         }
 
         [HttpGet]
