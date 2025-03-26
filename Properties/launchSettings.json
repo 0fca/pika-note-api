@@ -10,7 +10,7 @@
     "PikaNoteAPI": {
       "commandName": "Project",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Production"
       },
       "applicationUrl": "https://127.0.0.1:9001;http://127.0.0.1:9000"
     }
