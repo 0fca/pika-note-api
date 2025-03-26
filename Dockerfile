@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS build-env
+FROM pikanoteapiacr.azurecr.io/fcapikadomain:43 AS build-env
 WORKDIR /app
 
 # Copy csproj and restore as distinct layers
@@ -6,13 +6,12 @@ COPY *.csproj ./
 RUN dotnet restore
 
 # Copy everything else and build
-COPY . ./
-RUN dotnet publish -c Release -o out
+COPY . .
+RUN dotnet publish PikaNoteAPI.csproj -c Release -o out
 
 # Build runtime image
-FROM mcr.microsoft.com/dotnet/core/aspnet:3.1
+FROM mcr.microsoft.com/dotnet/aspnet:8.0
 EXPOSE 80
-EXPOSE 443
 WORKDIR /app
 COPY --from=build-env /app/out .
 ENTRYPOINT ["dotnet", "PikaNoteAPI.dll"]

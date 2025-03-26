@@ -1,11 +1,7 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 
 namespace PikaNoteAPI
 {
@@ -13,7 +9,14 @@ namespace PikaNoteAPI
     {
         public static void Main(string[] args)
         {
-            CreateHostBuilder(args).Build().Run();
+            if (args.Length == 0 || string.IsNullOrEmpty(args[0]))
+            {
+                var tmp = args.ToList();
+                tmp.Add("9000");
+                args = tmp.ToArray();
+            }
+            CreateHostBuilder(args)
+                .Build().Run();
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
