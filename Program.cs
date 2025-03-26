@@ -31,7 +31,11 @@ namespace PikaNoteAPI
                         });
                         if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development") {
                             webBuilder = webBuilder.UseUrls($"http://note.cloud.localhost:{args[0]}", $"https://note.cloud.localhost:{int.Parse(args[0]) + 1}");
-                        } 
+                        } else
+                        {
+                            webBuilder = webBuilder.UseUrls($"http://127.0.0.1:80");
+                        }
+
                     webBuilder.UseKestrel();
                 });
     }
