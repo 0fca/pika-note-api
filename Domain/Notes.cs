@@ -73,7 +73,7 @@ namespace PikaNoteAPI.Domain
                 note.UpdateHumanName(n.Name);
                 await this._noteRepository.UpdateAsync(id, note);
                 
-                return result.BucketId == currentNote.BucketId && result.MachineName == currentNote.MachineName;
+                return result.BucketId == note.BucketId && result.MachineName == note.MachineName;
             }
             catch (Exception ex)
             {
