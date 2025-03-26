@@ -21,6 +21,19 @@ namespace PikaNoteAPI
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
+                    webBuilder = webBuilder
+                        .ConfigureKestrel((context, options) =>
+                        {
+                            options.Limits.MaxRequestBodySize = 268435456;
+                        });
+                        if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development") {
+                            webBuilder = webBuilder.UseUrls($"http://note.cloud.localhost:{args[0]}", $"https://note.cloud.localhost:{int.Parse(args[0]) + 1}");
+                        } else
+                        {
+                            webBuilder = webBuilder.UseUrls($"http://note.cloud.localhost");
+                        }
+
+                    webBuilder.UseKestrel();
                 });
     }
 }
