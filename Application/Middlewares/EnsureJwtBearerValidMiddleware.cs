@@ -26,12 +26,17 @@ public class EnsureJwtBearerValidMiddleware
             await _next(context);
             return;
         }
+        if (!context.User!.Identity!.IsAuthenticated)
+        {
+            await _next(context);
+            return;
+        }
         var handler = new JwtSecurityTokenHandler();
         var jsonToken = handler.ReadToken(token);
         var jwst = jsonToken as JwtSecurityToken;
         var validTo = jwst!.ValidTo.ToLocalTime();
         var localNow = DateTime.Now.ToLocalTime();
-        
+
         if (validTo <= localNow)
         {
             var returnUrl = context.Request.Path;
