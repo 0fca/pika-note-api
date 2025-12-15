@@ -55,7 +55,7 @@ namespace PikaNoteAPI.Application.Controllers
 
         [HttpPost]
         [Route("/notes")]
-        [Authorize(Roles = "Administrator, Moderator")]
+        [Authorize(Policy = "AdministratorOrModerator")]
         public async Task<IActionResult> Add(
             [FromBody] NoteAddUpdateDto? note,
             [FromQuery] string bucketId
@@ -112,7 +112,7 @@ namespace PikaNoteAPI.Application.Controllers
         
         [HttpPut]
         [Route("{id}")]
-        [Authorize(Roles = "Moderator, Administrator")]
+        [Authorize(Policy = "AdministratorOrModerator")]
         public async Task<IActionResult> Update([FromBody]NoteAddUpdateDto? note, string id)
         {
             if (note == null)

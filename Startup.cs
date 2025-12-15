@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -69,7 +70,38 @@ namespace PikaNoteAPI
                     o.UseSystemNetHttp();
                     o.UseAspNetCore();
                 });
-            services.AddAuthorization();
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("AdministratorOrModerator", policy =>
+                    policy.RequireAssertion(context =>
+                    {
+                        var realmAccess = context.User.FindFirst("realm_access")?.Value;
+                        if (string.IsNullOrEmpty(realmAccess)) return false;
+
+                        try
+                        {
+                            using var doc = JsonDocument.Parse(realmAccess);
+                            if (doc.RootElement.TryGetProperty("roles", out var rolesElement) &&
+                                rolesElement.ValueKind == JsonValueKind.Array)
+                            {
+                                foreach (var role in rolesElement.EnumerateArray())
+                                {
+                                    var roleName = role.GetString();
+                                    if (roleName == "Administrator" || roleName == "Moderator")
+                                    {
+                                        return true;
+                                    }
+                                }
+                            }
+                        }
+                        catch
+                        {
+                            return false;
+                        }
+
+                        return false;
+                    }));
+            });
             services.AddHealthChecks();
             services.AddCors(options => options.AddPolicy("Base", builder =>
             {
