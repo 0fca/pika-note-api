@@ -2,6 +2,8 @@ using System;
 using System.Linq;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Configuration;
+
 
 namespace PikaNoteAPI
 {
@@ -9,14 +11,9 @@ namespace PikaNoteAPI
     {
         public static void Main(string[] args)
         {
-            if (args.Length == 0 || string.IsNullOrEmpty(args[0]))
-            {
-                var tmp = args.ToList();
-                tmp.Add("9000");
-                args = tmp.ToArray();
-            }
-            CreateHostBuilder(args)
-                .Build().Run();
+            CreateHostBuilder(args) 
+                .Build()
+                .Run();
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
@@ -24,19 +21,19 @@ namespace PikaNoteAPI
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
+                    webBuilder
+                    .UseConfiguration(new ConfigurationBuilder()
+                    .AddEnvironmentVariables()
+                    .AddCommandLine(args).Build())
+                    .UseKestrel();
                     webBuilder = webBuilder
                         .ConfigureKestrel((context, options) =>
                         {
                             options.Limits.MaxRequestBodySize = 268435456;
+                            var urls = context.Configuration["Kestrel:Urls"] ?? "http://note.cloud.localhost";
+                            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";                            
+                            webBuilder.UseUrls(urls.Split(';'));
                         });
-                        if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development") {
-                            webBuilder = webBuilder.UseUrls($"http://note.cloud.localhost:{args[0]}", $"https://note.cloud.localhost:{int.Parse(args[0]) + 1}");
-                        } else
-                        {
-                            webBuilder = webBuilder.UseUrls($"http://note.cloud.localhost");
-                        }
-
-                    webBuilder.UseKestrel();
                 });
     }
 }

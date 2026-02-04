@@ -88,7 +88,7 @@ namespace PikaNoteAPI.Application.Controllers
         
         [HttpDelete]
         [Route("{id?}")]
-        [Authorize(Roles = "Administrator")]
+        [Authorize(Policy = "AdministratorOrModerator")]
         public async Task<IActionResult> Remove(string id)
         {
             if (string.IsNullOrEmpty(id))
