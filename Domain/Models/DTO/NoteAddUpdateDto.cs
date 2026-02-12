@@ -1,9 +1,12 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Data;
+using System.Diagnostics.CodeAnalysis;
+using System.Text.RegularExpressions;
+using JasperFx.Core;
 using Newtonsoft.Json;
 
 namespace PikaNoteAPI.Domain.Models.DTO
 {
-    public class NoteAddUpdateDto
+    public partial class NoteAddUpdateDto
     {
         [JsonProperty(PropertyName = "name")]
         public string Name { get; set; }
@@ -26,6 +29,11 @@ namespace PikaNoteAPI.Domain.Models.DTO
                 BucketId = this.BucketId
             };
             n.GenerateId();
+            Regex regex = NoteNameRegex();
+            if(!regex.IsMatch(n.HumanName))
+            {
+                throw new InvalidConstraintException("Note name can only contain letters, numbers, spaces, underscores and dashes.");
+            }
             return n;
         }
 
@@ -44,5 +52,8 @@ namespace PikaNoteAPI.Domain.Models.DTO
         {
             return this.BucketId;
         }
+
+        [GeneratedRegex("^[a-zA-Z0-9 _-]+$")]
+        private static partial Regex NoteNameRegex();
     }
 }
