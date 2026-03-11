@@ -33,11 +33,7 @@ namespace PikaNoteAPI
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDistributedMemoryCache();
-            services.AddAuthentication(o =>
-                {
-                    o.DefaultScheme = Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme;
-                })
-                .AddJwtBearer();
+            services.AddAuthentication();
             services.Configure<CookiePolicyOptions>(options =>
             {
                 options.CheckConsentNeeded = context => true;
@@ -59,16 +55,7 @@ namespace PikaNoteAPI
                         ClientSecret = Configuration["ClientSecret"],
                         Issuer = new Uri(Configuration["Authority"], UriKind.Absolute)
                     });
-                })
-                 .AddValidation(o =>
-                 {
-                     o.SetIssuer(Configuration["Authority"]);
-                     o.UseIntrospection()
-                         .SetClientId(Configuration["ClientId"])
-                         .SetClientSecret(Configuration["ClientSecret"]);
-                     o.UseSystemNetHttp();
-                     o.UseAspNetCore();
-                 });
+                });
             services.AddAuthorization(options =>
             {
                 options.AddPolicy("AdministratorOrModerator", policy =>
@@ -141,7 +128,7 @@ namespace PikaNoteAPI
         {
             app.UseConfigureNotesStorageHttpClient();
             app.UseRouting();
-            app.UseOiddictAuthenticationCookieSupport();
+            //app.UseOiddictAuthenticationCookieSupport();
             app.UseAuthentication();
             app.UseEnsureJwtBearerValid();
             app.UseMapJwtClaimsToIdentity();
