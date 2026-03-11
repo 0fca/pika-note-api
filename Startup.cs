@@ -10,7 +10,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using OpenIddict.Client;
-using OpenIddict.Validation.AspNetCore;
 using PikaNoteAPI.Adapters.Database.Note.Repositories;
 using PikaNoteAPI.Application.Extensions;
 using PikaNoteAPI.Application.Middlewares;
@@ -34,11 +33,7 @@ namespace PikaNoteAPI
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDistributedMemoryCache();
-            services.AddAuthentication(o =>
-                {
-                    o.DefaultScheme = OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme;
-                })
-                .AddJwtBearer();
+            services.AddAuthentication();
             services.Configure<CookiePolicyOptions>(options =>
             {
                 options.CheckConsentNeeded = context => true;
@@ -60,15 +55,6 @@ namespace PikaNoteAPI
                         ClientSecret = Configuration["ClientSecret"],
                         Issuer = new Uri(Configuration["Authority"], UriKind.Absolute)
                     });
-                })
-                .AddValidation(o =>
-                {
-                    o.SetIssuer(Configuration["Authority"]);
-                    o.UseIntrospection()
-                        .SetClientId(Configuration["ClientId"])
-                        .SetClientSecret(Configuration["ClientSecret"]);
-                    o.UseSystemNetHttp();
-                    o.UseAspNetCore();
                 });
             services.AddAuthorization(options =>
             {
@@ -142,7 +128,7 @@ namespace PikaNoteAPI
         {
             app.UseConfigureNotesStorageHttpClient();
             app.UseRouting();
-            app.UseOiddictAuthenticationCookieSupport();
+            //app.UseOiddictAuthenticationCookieSupport();
             app.UseAuthentication();
             app.UseEnsureJwtBearerValid();
             app.UseMapJwtClaimsToIdentity();

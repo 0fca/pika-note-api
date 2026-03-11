@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using PikaNoteAPI.Application.Filters;
 
 namespace PikaNoteAPI.Application.Controllers;
 
@@ -24,7 +25,7 @@ public class SecurityController : Controller
         return Redirect($"{redirectUrl}?returnUrl={callbackUrl}");
     }
 
-    [Authorize]
+    [PikaCoreAuthorize]
     [Route("[action]")]
     [ActionName("Check")]
     public IActionResult LoginCheck()
