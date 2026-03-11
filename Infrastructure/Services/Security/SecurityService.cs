@@ -134,8 +134,8 @@ public class SecurityService : ISecurityService
             }
             body = await response.Content.ReadAsStringAsync();
             _logger.LogWarning("CheckTokenValidity: PikaCore Status response body: {Body}", body);
-            using var doc = JsonDocument.Parse(body);
-            var isAuthenticated = doc.RootElement.TryGetProperty("isAuthenticated", out var authEl)
+            doc = JsonDocument.Parse(body);
+            isAuthenticated = doc.RootElement.TryGetProperty("isAuthenticated", out var authEl)
                                   && (authEl.ValueKind == JsonValueKind.True || authEl.ValueKind == JsonValueKind.False)
                                   && authEl.GetBoolean();
             var hasUsername = doc.RootElement.TryGetProperty("username", out var userEl)
