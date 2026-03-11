@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Net.Http;
 using System.Net.Mime;
@@ -56,5 +57,49 @@ public class SecurityService : ISecurityService
 
         var result = JsonSerializer.Deserialize<Dictionary<Guid, bool>>(await response.Content.ReadAsStringAsync());
         return result;
+    }
+    
+    public async Task<bool> CheckTokenValidityAsync(string? identityCookie, string? refreshCookie)
+    {
+        if (string.IsNullOrEmpty(identityCookie))
+        {
+            return false;
+        }
+
+        try
+        {
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(identityCookie);
+            var jwst = jsonToken as JwtSecurityToken;
+            if (jwst == null || jwst.ValidTo.ToLocalTime() <= DateTime.Now.ToLocalTime())
+            {
+                return false;
+            }
+        }
+        catch
+        {
+            return false;
+        }
+
+        try
+        {
+            var cookieContainer = new CookieContainer();
+            var httpHandler = new HttpClientHandler { CookieContainer = cookieContainer };
+            using var httpClient = new HttpClient(httpHandler)
+            {
+                BaseAddress = this._http.BaseAddress
+            };
+            cookieContainer.Add(httpClient.BaseAddress!, new Cookie(".AspNet.Identity", identityCookie));
+            if (!string.IsNullOrEmpty(refreshCookie))
+            {
+                cookieContainer.Add(httpClient.BaseAddress!, new Cookie(".AspNet.Identity.Refresh", refreshCookie));
+            }
+            var response = await httpClient.GetAsync("/Identity/Gateway/Status");
+            return response.IsSuccessStatusCode;
+        }
+        catch
+        {
+            return false;
+        }
     }
 }

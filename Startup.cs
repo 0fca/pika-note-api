@@ -10,7 +10,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using OpenIddict.Client;
-using OpenIddict.Validation.AspNetCore;
 using PikaNoteAPI.Adapters.Database.Note.Repositories;
 using PikaNoteAPI.Application.Extensions;
 using PikaNoteAPI.Application.Middlewares;
@@ -36,7 +35,7 @@ namespace PikaNoteAPI
             services.AddDistributedMemoryCache();
             services.AddAuthentication(o =>
                 {
-                    o.DefaultScheme = OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme;
+                    o.DefaultScheme = Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme;
                 })
                 .AddJwtBearer();
             services.Configure<CookiePolicyOptions>(options =>
@@ -60,16 +59,16 @@ namespace PikaNoteAPI
                         ClientSecret = Configuration["ClientSecret"],
                         Issuer = new Uri(Configuration["Authority"], UriKind.Absolute)
                     });
-                })
-                .AddValidation(o =>
-                {
-                    o.SetIssuer(Configuration["Authority"]);
-                    o.UseIntrospection()
-                        .SetClientId(Configuration["ClientId"])
-                        .SetClientSecret(Configuration["ClientSecret"]);
-                    o.UseSystemNetHttp();
-                    o.UseAspNetCore();
                 });
+                // .AddValidation(o =>
+                // {
+                //     o.SetIssuer(Configuration["Authority"]);
+                //     o.UseIntrospection()
+                //         .SetClientId(Configuration["ClientId"])
+                //         .SetClientSecret(Configuration["ClientSecret"]);
+                //     o.UseSystemNetHttp();
+                //     o.UseAspNetCore();
+                // });
             services.AddAuthorization(options =>
             {
                 options.AddPolicy("AdministratorOrModerator", policy =>
