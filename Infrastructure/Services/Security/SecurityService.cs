@@ -116,20 +116,23 @@ public class SecurityService : ISecurityService
             _logger.LogWarning("CheckTokenValidity: calling PikaCore Status endpoint at {BaseAddress}/Identity/Gateway/Status", httpClient.BaseAddress);
             var response = await httpClient.GetAsync("/Identity/Gateway/Status");
             _logger.LogWarning("CheckTokenValidity: first call returned {StatusCode}", (int)response.StatusCode);
-
-            if (!response.IsSuccessStatusCode && response.StatusCode == HttpStatusCode.Unauthorized && hasRefreshCookie)
-            {
-                _logger.LogWarning("CheckTokenValidity: got 401 with refresh cookie present, retrying (PikaCore RefreshTokenMiddleware should have refreshed the token)");
-                response = await httpClient.GetAsync("/Identity/Gateway/Status");
-                _logger.LogWarning("CheckTokenValidity: retry call returned {StatusCode}", (int)response.StatusCode);
-            }
-
+            
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogWarning("CheckTokenValidity: PikaCore Status returned non-success status {StatusCode}", (int)response.StatusCode);
                 return false;
             }
+
             var body = await response.Content.ReadAsStringAsync();
+            _logger.LogWarning("CheckTokenValidity: PikaCore Status response body: {Body}", body);
+            using var doc = JsonDocument.Parse(body);
+            var isAuthenticated = doc.RootElement.TryGetProperty("isAuthenticated", out var authEl)
+                                  && (authEl.ValueKind == JsonValueKind.True || authEl.ValueKind == JsonValueKind.False)
+                                  && authEl.GetBoolean();
+            if(!isAuthenticated && hasRefreshCookie) {
+                response = await httpClient.GetAsync("/Identity/Gateway/Status");
+            }
+            body = await response.Content.ReadAsStringAsync();
             _logger.LogWarning("CheckTokenValidity: PikaCore Status response body: {Body}", body);
             using var doc = JsonDocument.Parse(body);
             var isAuthenticated = doc.RootElement.TryGetProperty("isAuthenticated", out var authEl)
