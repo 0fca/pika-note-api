@@ -66,12 +66,14 @@ public class SecurityService : ISecurityService
             return false;
         }
 
+        var hasRefreshCookie = !string.IsNullOrEmpty(refreshCookie);
+
         try
         {
             var handler = new JwtSecurityTokenHandler();
             var jsonToken = handler.ReadToken(identityCookie);
             var jwst = jsonToken as JwtSecurityToken;
-            if (jwst == null || jwst.ValidTo <= DateTime.UtcNow)
+            if (jwst == null || (jwst.ValidTo <= DateTime.UtcNow && !hasRefreshCookie))
             {
                 return false;
             }
@@ -90,12 +92,23 @@ public class SecurityService : ISecurityService
                 BaseAddress = this._http.BaseAddress
             };
             cookieContainer.Add(httpClient.BaseAddress!, new Cookie(".AspNet.Identity", identityCookie));
-            if (!string.IsNullOrEmpty(refreshCookie))
+            if (hasRefreshCookie)
             {
-                cookieContainer.Add(httpClient.BaseAddress!, new Cookie(".AspNet.Identity.Refresh", refreshCookie));
+                cookieContainer.Add(httpClient.BaseAddress!, new Cookie(".AspNet.Identity.Refresh", refreshCookie!));
             }
             var response = await httpClient.GetAsync("/Identity/Gateway/Status");
-            return response.IsSuccessStatusCode;
+            if (!response.IsSuccessStatusCode)
+            {
+                return false;
+            }
+            var body = await response.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(body);
+            var isAuthenticated = doc.RootElement.TryGetProperty("isAuthenticated", out var authEl)
+                                  && authEl.GetBoolean();
+            var hasUsername = doc.RootElement.TryGetProperty("username", out var userEl)
+                             && userEl.ValueKind == JsonValueKind.String
+                             && !string.IsNullOrEmpty(userEl.GetString());
+            return isAuthenticated && hasUsername;
         }
         catch
         {
