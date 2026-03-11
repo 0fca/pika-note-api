@@ -104,6 +104,7 @@ public class SecurityService : ISecurityService
             var body = await response.Content.ReadAsStringAsync();
             using var doc = JsonDocument.Parse(body);
             var isAuthenticated = doc.RootElement.TryGetProperty("isAuthenticated", out var authEl)
+                                  && (authEl.ValueKind == JsonValueKind.True || authEl.ValueKind == JsonValueKind.False)
                                   && authEl.GetBoolean();
             var hasUsername = doc.RootElement.TryGetProperty("username", out var userEl)
                              && userEl.ValueKind == JsonValueKind.String
