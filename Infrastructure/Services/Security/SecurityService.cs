@@ -9,6 +9,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace PikaNoteAPI.Infrastructure.Services.Security;
 
@@ -17,12 +18,15 @@ public class SecurityService : ISecurityService
     private readonly HttpClient _http;
     private readonly IConfiguration _configuration;
     private readonly CookieContainer _cookieContainer;
+    private readonly ILogger<SecurityService> _logger;
     
     public SecurityService(
-        IConfiguration configuration
+        IConfiguration configuration,
+        ILogger<SecurityService> logger
         )
     {
         this._configuration = configuration;
+        this._logger = logger;
         this._cookieContainer = new CookieContainer();
         var handler = new HttpClientHandler() { CookieContainer = this._cookieContainer };
         this._http = new HttpClient(handler)
@@ -63,6 +67,7 @@ public class SecurityService : ISecurityService
     {
         if (string.IsNullOrEmpty(identityCookie))
         {
+            _logger.LogWarning("CheckTokenValidity: identity cookie is null or empty");
             return false;
         }
 
@@ -73,13 +78,24 @@ public class SecurityService : ISecurityService
             var handler = new JwtSecurityTokenHandler();
             var jsonToken = handler.ReadToken(identityCookie);
             var jwst = jsonToken as JwtSecurityToken;
-            if (jwst == null || (jwst.ValidTo <= DateTime.UtcNow && !hasRefreshCookie))
+            if (jwst == null)
             {
+                _logger.LogWarning("CheckTokenValidity: failed to parse JWT from identity cookie");
                 return false;
             }
+            if (jwst.ValidTo <= DateTime.UtcNow && !hasRefreshCookie)
+            {
+                _logger.LogWarning("CheckTokenValidity: access token expired at {ValidTo} and no refresh cookie present", jwst.ValidTo);
+                return false;
+            }
+            if (jwst.ValidTo <= DateTime.UtcNow && hasRefreshCookie)
+            {
+                _logger.LogWarning("CheckTokenValidity: access token expired at {ValidTo} but refresh cookie present, proceeding to PikaCore", jwst.ValidTo);
+            }
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogWarning(ex, "CheckTokenValidity: exception while parsing JWT");
             return false;
         }
 
@@ -96,12 +112,25 @@ public class SecurityService : ISecurityService
             {
                 cookieContainer.Add(httpClient.BaseAddress!, new Cookie(".AspNet.Identity.Refresh", refreshCookie!));
             }
+
+            _logger.LogWarning("CheckTokenValidity: calling PikaCore Status endpoint at {BaseAddress}/Identity/Gateway/Status", httpClient.BaseAddress);
             var response = await httpClient.GetAsync("/Identity/Gateway/Status");
+            _logger.LogWarning("CheckTokenValidity: first call returned {StatusCode}", (int)response.StatusCode);
+
+            if (!response.IsSuccessStatusCode && response.StatusCode == HttpStatusCode.Unauthorized && hasRefreshCookie)
+            {
+                _logger.LogWarning("CheckTokenValidity: got 401 with refresh cookie present, retrying (PikaCore RefreshTokenMiddleware should have refreshed the token)");
+                response = await httpClient.GetAsync("/Identity/Gateway/Status");
+                _logger.LogWarning("CheckTokenValidity: retry call returned {StatusCode}", (int)response.StatusCode);
+            }
+
             if (!response.IsSuccessStatusCode)
             {
+                _logger.LogWarning("CheckTokenValidity: PikaCore Status returned non-success status {StatusCode}", (int)response.StatusCode);
                 return false;
             }
             var body = await response.Content.ReadAsStringAsync();
+            _logger.LogWarning("CheckTokenValidity: PikaCore Status response body: {Body}", body);
             using var doc = JsonDocument.Parse(body);
             var isAuthenticated = doc.RootElement.TryGetProperty("isAuthenticated", out var authEl)
                                   && (authEl.ValueKind == JsonValueKind.True || authEl.ValueKind == JsonValueKind.False)
@@ -109,10 +138,15 @@ public class SecurityService : ISecurityService
             var hasUsername = doc.RootElement.TryGetProperty("username", out var userEl)
                              && userEl.ValueKind == JsonValueKind.String
                              && !string.IsNullOrEmpty(userEl.GetString());
+            if (!isAuthenticated || !hasUsername)
+            {
+                _logger.LogWarning("CheckTokenValidity: validation failed - isAuthenticated={IsAuthenticated}, hasUsername={HasUsername}", isAuthenticated, hasUsername);
+            }
             return isAuthenticated && hasUsername;
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogWarning(ex, "CheckTokenValidity: exception during PikaCore Status call");
             return false;
         }
     }
