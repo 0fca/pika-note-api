@@ -105,7 +105,7 @@ public class SecurityService : ISecurityService
             var httpHandler = new HttpClientHandler { CookieContainer = cookieContainer };
             using var httpClient = new HttpClient(httpHandler)
             {
-                BaseAddress = this._http.BaseAddress
+                BaseAddress = "https://api-core.lukas-bownik.net"
             };
             cookieContainer.Add(httpClient.BaseAddress!, new Cookie(".AspNet.Identity", identityCookie));
             if (hasRefreshCookie)
