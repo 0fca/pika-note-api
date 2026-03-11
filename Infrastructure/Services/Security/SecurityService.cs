@@ -71,7 +71,7 @@ public class SecurityService : ISecurityService
             var handler = new JwtSecurityTokenHandler();
             var jsonToken = handler.ReadToken(identityCookie);
             var jwst = jsonToken as JwtSecurityToken;
-            if (jwst == null || jwst.ValidTo.ToLocalTime() <= DateTime.Now.ToLocalTime())
+            if (jwst == null || jwst.ValidTo <= DateTime.UtcNow)
             {
                 return false;
             }
