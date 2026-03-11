@@ -59,16 +59,16 @@ namespace PikaNoteAPI
                         ClientSecret = Configuration["ClientSecret"],
                         Issuer = new Uri(Configuration["Authority"], UriKind.Absolute)
                     });
-                });
-                // .AddValidation(o =>
-                // {
-                //     o.SetIssuer(Configuration["Authority"]);
-                //     o.UseIntrospection()
-                //         .SetClientId(Configuration["ClientId"])
-                //         .SetClientSecret(Configuration["ClientSecret"]);
-                //     o.UseSystemNetHttp();
-                //     o.UseAspNetCore();
-                // });
+                })
+                 .AddValidation(o =>
+                 {
+                     o.SetIssuer(Configuration["Authority"]);
+                     o.UseIntrospection()
+                         .SetClientId(Configuration["ClientId"])
+                         .SetClientSecret(Configuration["ClientSecret"]);
+                     o.UseSystemNetHttp();
+                     o.UseAspNetCore();
+                 });
             services.AddAuthorization(options =>
             {
                 options.AddPolicy("AdministratorOrModerator", policy =>
