@@ -54,7 +54,7 @@ public class PikaCoreAuthorizationFilter : IAsyncAuthorizationFilter
             {
                 HttpOnly = true,
                 Secure = true,
-                SameSite = SameSiteMode.None,
+                SameSite = SameSiteMode.Strict,
                 Domain = _configuration["CookieDomain"] ?? DefaultCookieDomain
             };
             context.HttpContext.Response.Cookies.Delete(".AspNet.Identity", deletionOptions);
@@ -70,7 +70,7 @@ public class PikaCoreAuthorizationFilter : IAsyncAuthorizationFilter
             {
                 HttpOnly = true,
                 Secure = true,
-                SameSite = SameSiteMode.None,
+                SameSite = SameSiteMode.Strict,
                 Domain = _configuration["CookieDomain"] ?? DefaultCookieDomain,
                 MaxAge = maxAge
             };
