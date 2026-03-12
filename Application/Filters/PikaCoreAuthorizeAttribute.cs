@@ -4,6 +4,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using PikaNoteAPI.Infrastructure.Services.Security;
@@ -41,11 +42,27 @@ public class PikaCoreAuthorizationFilter : IAsyncAuthorizationFilter
         var identityCookie = context.HttpContext.Request.Cookies[".AspNet.Identity"];
         var refreshCookie = context.HttpContext.Request.Cookies[".AspNet.Identity.Refresh"];
 
-        var isValid = await _securityService.CheckTokenValidityAsync(identityCookie, refreshCookie);
-        if (!isValid)
+        var result = await _securityService.CheckTokenValidityAsync(identityCookie, refreshCookie);
+        if (!result.IsValid)
         {
             context.Result = new UnauthorizedResult();
             return;
+        }
+
+        if (!string.IsNullOrEmpty(result.NewAccessToken))
+        {
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None
+            };
+            context.HttpContext.Response.Cookies.Append(".AspNet.Identity", result.NewAccessToken, cookieOptions);
+            if (!string.IsNullOrEmpty(result.NewRefreshToken))
+            {
+                context.HttpContext.Response.Cookies.Append(".AspNet.Identity.Refresh", result.NewRefreshToken, cookieOptions);
+            }
+            identityCookie = result.NewAccessToken;
         }
 
         if (!string.IsNullOrEmpty(_roles))
