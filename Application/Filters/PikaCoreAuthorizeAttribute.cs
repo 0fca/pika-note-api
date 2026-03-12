@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.Extensions.Configuration;
 using PikaNoteAPI.Infrastructure.Services.Security;
 
 namespace PikaNoteAPI.Application.Filters;
@@ -29,11 +30,15 @@ public class PikaCoreAuthorizeAttribute : TypeFilterAttribute
 public class PikaCoreAuthorizationFilter : IAsyncAuthorizationFilter
 {
     private readonly ISecurityService _securityService;
+    private readonly IConfiguration _configuration;
     private readonly string _roles;
+    private const string DefaultCookieDomain = ".lukas-bownik.net";
+    private static readonly TimeSpan DefaultMaxAge = TimeSpan.FromMinutes(2);
 
-    public PikaCoreAuthorizationFilter(ISecurityService securityService, string roles)
+    public PikaCoreAuthorizationFilter(ISecurityService securityService, IConfiguration configuration, string roles)
     {
         _securityService = securityService;
+        _configuration = configuration;
         _roles = roles;
     }
 
@@ -45,17 +50,29 @@ public class PikaCoreAuthorizationFilter : IAsyncAuthorizationFilter
         var result = await _securityService.CheckTokenValidityAsync(identityCookie, refreshCookie);
         if (!result.IsValid)
         {
+            var deletionOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Domain = _configuration["CookieDomain"] ?? DefaultCookieDomain
+            };
+            context.HttpContext.Response.Cookies.Delete(".AspNet.Identity", deletionOptions);
+            context.HttpContext.Response.Cookies.Delete(".AspNet.Identity.Refresh", deletionOptions);
             context.Result = new UnauthorizedResult();
             return;
         }
 
         if (!string.IsNullOrEmpty(result.NewAccessToken))
         {
+            var maxAge = GetTokenLifetime(result.NewAccessToken) ?? DefaultMaxAge;
             var cookieOptions = new CookieOptions
             {
                 HttpOnly = true,
                 Secure = true,
-                SameSite = SameSiteMode.None
+                SameSite = SameSiteMode.None,
+                Domain = _configuration["CookieDomain"] ?? DefaultCookieDomain,
+                MaxAge = maxAge
             };
             context.HttpContext.Response.Cookies.Append(".AspNet.Identity", result.NewAccessToken, cookieOptions);
             if (!string.IsNullOrEmpty(result.NewRefreshToken))
@@ -74,6 +91,22 @@ public class PikaCoreAuthorizationFilter : IAsyncAuthorizationFilter
                 context.Result = new ForbidResult();
                 return;
             }
+        }
+    }
+
+    private static TimeSpan? GetTokenLifetime(string accessToken)
+    {
+        try
+        {
+            var handler = new JwtSecurityTokenHandler();
+            var jwt = handler.ReadToken(accessToken) as JwtSecurityToken;
+            if (jwt == null) return null;
+            var lifetime = jwt.ValidTo - jwt.ValidFrom;
+            return lifetime > TimeSpan.Zero ? lifetime : null;
+        }
+        catch
+        {
+            return null;
         }
     }
 
