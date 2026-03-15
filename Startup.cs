@@ -56,6 +56,7 @@ namespace PikaNoteAPI
                         Issuer = new Uri(Configuration["Authority"], UriKind.Absolute)
                     });
                 });
+            services.AddAuthentication();
             services.AddAuthorization(options =>
             {
                 options.AddPolicy("AdministratorOrModerator", policy =>
@@ -128,7 +129,7 @@ namespace PikaNoteAPI
         {
             app.UseConfigureNotesStorageHttpClient();
             app.UseRouting();
-            //app.UseOiddictAuthenticationCookieSupport();
+            app.UseOiddictAuthenticationCookieSupport();
             app.UseAuthentication();
             app.UseEnsureJwtBearerValid();
             app.UseMapJwtClaimsToIdentity();
@@ -141,6 +142,7 @@ namespace PikaNoteAPI
 
             app.UseSwagger();
             app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "PikaNote API"));
+            app.UseAuthentication();
             //app.UseHttpsRedirection();
             app.UseAuthorization();
             app.UseMiddleware<NoteFileStorageSecurity>();
