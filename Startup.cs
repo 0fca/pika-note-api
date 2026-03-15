@@ -1,4 +1,6 @@
 using System;
+using System.Linq;
+using System.Security.Claims;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
@@ -56,37 +58,14 @@ namespace PikaNoteAPI
                         Issuer = new Uri(Configuration["Authority"], UriKind.Absolute)
                     });
                 });
-            services.AddAuthentication();
+
             services.AddAuthorization(options =>
             {
                 options.AddPolicy("AdministratorOrModerator", policy =>
                     policy.RequireAssertion(context =>
                     {
-                        var realmAccess = context.User.FindFirst("realm_access")?.Value;
-                        if (string.IsNullOrEmpty(realmAccess)) return false;
-
-                        try
-                        {
-                            using var doc = JsonDocument.Parse(realmAccess);
-                            if (doc.RootElement.TryGetProperty("roles", out var rolesElement) &&
-                                rolesElement.ValueKind == JsonValueKind.Array)
-                            {
-                                foreach (var role in rolesElement.EnumerateArray())
-                                {
-                                    var roleName = role.GetString();
-                                    if (roleName == "Administrator" || roleName == "Moderator")
-                                    {
-                                        return true;
-                                    }
-                                }
-                            }
-                        }
-                        catch
-                        {
-                            return false;
-                        }
-
-                        return false;
+                        var roleClaims = context.User.FindAll(ClaimTypes.Role).Select(c => c.Value);
+                        return roleClaims.Contains("Administrator") || roleClaims.Contains("Moderator");
                     }));
             });
             services.AddHealthChecks();
@@ -94,7 +73,7 @@ namespace PikaNoteAPI
             {
                 builder
                     .AllowCredentials()
-                    .WithOrigins(["http://note.cloud.localhost:8080", "https://note.lukas-bownik.net", "https://note.cloud.localhost:8443"])
+                    .WithOrigins("http://note.cloud.localhost:8080", "https://note.lukas-bownik.net", "https://note.cloud.localhost:8443")
                     .AllowAnyMethod()
                     .AllowAnyHeader();
             }));

@@ -177,7 +177,7 @@ namespace PikaNoteAPI.Application.Controllers
 
         [HttpGet]
         [Route("/notes/search")]
-        [AllowAnonymous]
+        [Authorize(Policy =  "AdministratorOrModerator")]
         public async Task<IActionResult> Search(
             [FromQuery] string bucketId,
             [FromQuery] string query,

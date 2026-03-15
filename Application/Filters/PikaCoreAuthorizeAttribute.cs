@@ -1,8 +1,5 @@
 using System;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
-using System.Security.Claims;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -15,7 +12,8 @@ namespace PikaNoteAPI.Application.Filters;
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = false)]
 public class PikaCoreAuthorizeAttribute : TypeFilterAttribute
 {
-    public PikaCoreAuthorizeAttribute() : base(typeof(PikaCoreAuthorizationFilter)){}
+    public PikaCoreAuthorizeAttribute() : base(typeof(PikaCoreAuthorizationFilter))
+    {}
 }
 
 public class PikaCoreAuthorizationFilter : IAsyncAuthorizationFilter
@@ -68,19 +66,7 @@ public class PikaCoreAuthorizationFilter : IAsyncAuthorizationFilter
             {
                 context.HttpContext.Response.Cookies.Append(".AspNet.Identity.Refresh", result.NewRefreshToken, cookieOptions);
             }
-            //identityCookie = result.NewAccessToken;
         }
-
-        /*if (!string.IsNullOrEmpty(_roles))
-        {
-            var requiredRoles = _roles.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            var userRoles = GetUserRoles(context, identityCookie);
-            if (!requiredRoles.Any(required => userRoles.Contains(required, StringComparer.OrdinalIgnoreCase)))
-            {
-                context.Result = new ForbidResult();
-                return;
-            }
-        }*/
     }
 
     private static TimeSpan? GetTokenLifetime(string accessToken)
@@ -97,48 +83,5 @@ public class PikaCoreAuthorizationFilter : IAsyncAuthorizationFilter
         {
             return null;
         }
-    }
-
-    private static string[] GetUserRoles(AuthorizationFilterContext context, string? identityCookie)
-    {
-        var roleClaims = context.HttpContext.User.FindAll(ClaimTypes.Role)
-            .Select(c => c.Value)
-            .ToArray();
-        if (roleClaims.Length > 0)
-        {
-            return roleClaims;
-        }
-
-        if (string.IsNullOrEmpty(identityCookie))
-        {
-            return Array.Empty<string>();
-        }
-
-        try
-        {
-            var handler = new JwtSecurityTokenHandler();
-            var jsonToken = handler.ReadToken(identityCookie) as JwtSecurityToken;
-            var realmAccess = jsonToken?.Claims.FirstOrDefault(c => c.Type == "realm_access")?.Value;
-            if (string.IsNullOrEmpty(realmAccess))
-            {
-                return Array.Empty<string>();
-            }
-
-            using var doc = JsonDocument.Parse(realmAccess);
-            if (doc.RootElement.TryGetProperty("roles", out var rolesElement) &&
-                rolesElement.ValueKind == JsonValueKind.Array)
-            {
-                return rolesElement.EnumerateArray()
-                    .Select(r => r.GetString() ?? string.Empty)
-                    .Where(r => !string.IsNullOrEmpty(r))
-                    .ToArray();
-            }
-        }
-        catch
-        {
-            // Ignored - return empty roles
-        }
-
-        return Array.Empty<string>();
     }
 }
