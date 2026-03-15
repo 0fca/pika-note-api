@@ -16,6 +16,7 @@ namespace PikaNoteAPI.Domain.Contract
         Task<IList<Note>> FindByDate(DateTime d, IList<Note> notes = null);
         Task<NoteDTO?> GetNoteByIdAsUser(string token, string id);
         Task<IList<Note>> GetNotesAsUser(string token, string bucketId, int offset, int pageSize, int order);
+        Task<IList<Note>> SearchNotes(string token, string bucketId, string query, int maxResults = 20);
         bool HasSecurityConfigured();
         internal void ConfigureSecurityService(ISecurityService securityService);
         internal void ConfigureNoteStorageHttpClient(NoteStorageHttpClient noteStorageHttpClient);

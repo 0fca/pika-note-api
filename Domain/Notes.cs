@@ -107,6 +107,16 @@ namespace PikaNoteAPI.Domain
             }
         }
 
+        public async Task<IList<Note>> SearchNotes(string token, string bucketId, string query, int maxResults = 20)
+        {
+            if (string.IsNullOrEmpty(bucketId) || string.IsNullOrEmpty(query))
+            {
+                return [];
+            }
+            var notes = (await this._noteRepository.SearchByNameAsync(bucketId, query, maxResults)).ToList();
+            return notes;
+        }
+
         public async Task<IList<Note>> GetNotesAsUser(string token, string? bucketId = null, int offset = 0, int pageSize = 10, int order = 0)
         {
             if (string.IsNullOrEmpty(bucketId))

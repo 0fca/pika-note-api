@@ -84,6 +84,12 @@ namespace PikaNoteAPI.Application.Controllers
                 apiResponse.Success = false;
                 return StatusCode(401, apiResponse);
             }
+            catch(Exception ex)
+            {
+                apiResponse.Message = "Couldn't add note: " + ex.Message;
+                apiResponse.Success = false;
+                return StatusCode(500, apiResponse);
+            }
         }
         
         [HttpDelete]
@@ -162,6 +168,33 @@ namespace PikaNoteAPI.Application.Controllers
                 Message = $"All notes by date {date} retrieved successfully",
                 Success = true,
                 Payload = await _notes.FindByDate(DateTime.Parse(date), notes)
+            });
+        }
+
+        [HttpGet]
+        [Route("/notes/search")]
+        [AllowAnonymous]
+        public async Task<IActionResult> Search(
+            [FromQuery] string bucketId,
+            [FromQuery] string query,
+            [FromQuery] int maxResults = 20
+        )
+        {
+            var token = HttpContext.Request.Cookies[".AspNet.Identity"]!;
+            if (string.IsNullOrEmpty(token))
+            {
+                return Unauthorized();
+            }
+            if (string.IsNullOrEmpty(query) || string.IsNullOrEmpty(bucketId))
+            {
+                return BadRequest(new ApiResponse { Success = false, Message = "Query and bucketId are required" });
+            }
+            var notes = await _notes.SearchNotes(token, bucketId, query, maxResults);
+            return Ok(new ApiResponse
+            {
+                Success = true,
+                Message = "Search results",
+                Payload = notes
             });
         }
 

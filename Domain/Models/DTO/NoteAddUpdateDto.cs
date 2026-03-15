@@ -53,7 +53,7 @@ namespace PikaNoteAPI.Domain.Models.DTO
             return this.BucketId;
         }
 
-        [GeneratedRegex("^[a-zA-Z0-9 _-]+$")]
+        [GeneratedRegex(@"^[\w\s-]+$")]
         private static partial Regex NoteNameRegex();
     }
 }
