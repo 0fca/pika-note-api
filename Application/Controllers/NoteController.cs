@@ -122,7 +122,7 @@ namespace PikaNoteAPI.Application.Controllers
         [HttpPut]
         [Route("{id}")]
         [PikaCoreAuthorize]
-        //[Authorize(Policy =  "AdministratorOrModerator")]
+        [Authorize(Policy =  "AdministratorOrModerator")]
         public async Task<IActionResult> Update([FromBody]NoteAddUpdateDto? note, string id)
         {
             if (note == null)
