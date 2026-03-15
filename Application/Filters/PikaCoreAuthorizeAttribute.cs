@@ -15,23 +15,13 @@ namespace PikaNoteAPI.Application.Filters;
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = false)]
 public class PikaCoreAuthorizeAttribute : TypeFilterAttribute
 {
-    public PikaCoreAuthorizeAttribute() : base(typeof(PikaCoreAuthorizationFilter))
-    {
-        Arguments = new object[] { string.Empty };
-    }
-
-    public string Roles
-    {
-        get => (string)Arguments[0];
-        set => Arguments = new object[] { value };
-    }
+    public PikaCoreAuthorizeAttribute() : base(typeof(PikaCoreAuthorizationFilter)){}
 }
 
 public class PikaCoreAuthorizationFilter : IAsyncAuthorizationFilter
 {
     private readonly ISecurityService _securityService;
     private readonly IConfiguration _configuration;
-    private readonly string _roles;
     private const string DefaultCookieDomain = ".lukas-bownik.net";
     private static readonly TimeSpan DefaultMaxAge = TimeSpan.FromMinutes(2);
 
@@ -39,7 +29,6 @@ public class PikaCoreAuthorizationFilter : IAsyncAuthorizationFilter
     {
         _securityService = securityService;
         _configuration = configuration;
-        //_roles = roles;
     }
 
     public async Task OnAuthorizationAsync(AuthorizationFilterContext context)
