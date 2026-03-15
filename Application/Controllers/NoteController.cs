@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
+using PikaNoteAPI.Application.Filters;
 using PikaNoteAPI.Domain.Contract;
 using PikaNoteAPI.Domain.Models.DTO;
 using PikaNoteAPI.Models;
@@ -55,7 +56,7 @@ namespace PikaNoteAPI.Application.Controllers
 
         [HttpPost]
         [Route("/notes")]
-        [Authorize(Policy = "AdministratorOrModerator")]
+        [PikaCoreAuthorize(Roles = "Administrator,Moderator")]
         public async Task<IActionResult> Add(
             [FromBody] NoteAddUpdateDto? note,
             [FromQuery] string bucketId
@@ -94,7 +95,7 @@ namespace PikaNoteAPI.Application.Controllers
         
         [HttpDelete]
         [Route("{id?}")]
-        [Authorize(Policy = "AdministratorOrModerator")]
+        [PikaCoreAuthorize(Roles = "Administrator,Moderator")]
         public async Task<IActionResult> Remove(string id)
         {
             if (string.IsNullOrEmpty(id))
@@ -118,7 +119,7 @@ namespace PikaNoteAPI.Application.Controllers
         
         [HttpPut]
         [Route("{id}")]
-        [Authorize(Policy = "AdministratorOrModerator")]
+        [PikaCoreAuthorize(Roles = "Administrator,Moderator")]
         public async Task<IActionResult> Update([FromBody]NoteAddUpdateDto? note, string id)
         {
             if (note == null)
