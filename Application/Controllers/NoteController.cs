@@ -56,7 +56,8 @@ namespace PikaNoteAPI.Application.Controllers
 
         [HttpPost]
         [Route("/notes")]
-        [PikaCoreAuthorize(Roles = "Administrator,Moderator")]
+        [PikaCoreAuthorize]
+        [Authorize(Policy =  "AdministratorOrModerator")]
         public async Task<IActionResult> Add(
             [FromBody] NoteAddUpdateDto? note,
             [FromQuery] string bucketId
@@ -95,7 +96,8 @@ namespace PikaNoteAPI.Application.Controllers
         
         [HttpDelete]
         [Route("{id?}")]
-        [PikaCoreAuthorize(Roles = "Administrator,Moderator")]
+        [PikaCoreAuthorize]
+        [Authorize(Policy =  "AdministratorOrModerator")]
         public async Task<IActionResult> Remove(string id)
         {
             if (string.IsNullOrEmpty(id))
@@ -119,7 +121,8 @@ namespace PikaNoteAPI.Application.Controllers
         
         [HttpPut]
         [Route("{id}")]
-        [PikaCoreAuthorize(Roles = "Administrator,Moderator")]
+        [PikaCoreAuthorize]
+        [Authorize(Policy =  "AdministratorOrModerator")]
         public async Task<IActionResult> Update([FromBody]NoteAddUpdateDto? note, string id)
         {
             if (note == null)

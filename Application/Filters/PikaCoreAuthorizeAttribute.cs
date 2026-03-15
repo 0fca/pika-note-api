@@ -35,11 +35,11 @@ public class PikaCoreAuthorizationFilter : IAsyncAuthorizationFilter
     private const string DefaultCookieDomain = ".lukas-bownik.net";
     private static readonly TimeSpan DefaultMaxAge = TimeSpan.FromMinutes(2);
 
-    public PikaCoreAuthorizationFilter(ISecurityService securityService, IConfiguration configuration, string roles)
+    public PikaCoreAuthorizationFilter(ISecurityService securityService, IConfiguration configuration)
     {
         _securityService = securityService;
         _configuration = configuration;
-        _roles = roles;
+        //_roles = roles;
     }
 
     public async Task OnAuthorizationAsync(AuthorizationFilterContext context)
@@ -79,10 +79,10 @@ public class PikaCoreAuthorizationFilter : IAsyncAuthorizationFilter
             {
                 context.HttpContext.Response.Cookies.Append(".AspNet.Identity.Refresh", result.NewRefreshToken, cookieOptions);
             }
-            identityCookie = result.NewAccessToken;
+            //identityCookie = result.NewAccessToken;
         }
 
-        if (!string.IsNullOrEmpty(_roles))
+        /*if (!string.IsNullOrEmpty(_roles))
         {
             var requiredRoles = _roles.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             var userRoles = GetUserRoles(context, identityCookie);
@@ -91,7 +91,7 @@ public class PikaCoreAuthorizationFilter : IAsyncAuthorizationFilter
                 context.Result = new ForbidResult();
                 return;
             }
-        }
+        }*/
     }
 
     private static TimeSpan? GetTokenLifetime(string accessToken)
