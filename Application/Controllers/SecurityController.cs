@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using PikaNoteAPI.Application.Filters;
 using PikaNoteAPI.Infrastructure.Services.Security;
+using System.Threading.Tasks;
 
 namespace PikaNoteAPI.Application.Controllers;
 
