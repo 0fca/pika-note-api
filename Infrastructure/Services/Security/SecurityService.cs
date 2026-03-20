@@ -169,33 +169,16 @@ public class SecurityService : ISecurityService
             var newAccessToken = cookies[".AspNet.Identity"]?.Value;
             var newRefreshToken = cookies[".AspNet.Identity.Refresh"]?.Value;
 
-            if (!string.IsNullOrEmpty(newAccessToken))
-            {
-                _logger.LogWarning("RefreshToken: Refresh succeeded, new tokens obtained from cookies");
-                return TokenValidationResult.Refreshed(newAccessToken, newRefreshToken);
-            }
-
             var refreshBody = await refreshResponse.Content.ReadAsStringAsync();
             _logger.LogWarning("RefreshToken: Refresh response body: {Body}", refreshBody);
 
-            if (!string.IsNullOrEmpty(refreshBody))
+            if (!string.IsNullOrEmpty(newAccessToken))
             {
-                var doc = JsonDocument.Parse(refreshBody);
-                var accessToken = doc.RootElement.TryGetProperty("accessToken", out var atEl) && atEl.ValueKind == JsonValueKind.String
-                    ? atEl.GetString()
-                    : null;
-                var refreshToken = doc.RootElement.TryGetProperty("refreshToken", out var rtEl) && rtEl.ValueKind == JsonValueKind.String
-                    ? rtEl.GetString()
-                    : null;
-
-                if (!string.IsNullOrEmpty(accessToken))
-                {
-                    _logger.LogWarning("RefreshToken: Refresh succeeded, new tokens obtained from response body");
-                    return TokenValidationResult.Refreshed(accessToken, refreshToken);
-                }
+                _logger.LogWarning(newAccessToken);
+                _logger.LogWarning(newRefreshToken);
+                _logger.LogWarning("RefreshToken: Refresh succeeded, new tokens obtained from cookies");
+                return TokenValidationResult.Refreshed(newAccessToken, newRefreshToken);
             }
-
-            _logger.LogWarning("RefreshToken: Refresh endpoint returned success but no tokens found in response");
             return TokenValidationResult.Failure();
         }
         catch (Exception ex)
