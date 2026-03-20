@@ -165,20 +165,31 @@ public class SecurityService : ISecurityService
                 return TokenValidationResult.Failure();
             }
 
-            var cookies = cookieContainer.GetCookies(httpClient.BaseAddress!);
-            var newAccessToken = cookies[".AspNet.Identity"]?.Value;
-            var newRefreshToken = cookies[".AspNet.Identity.Refresh"]?.Value;
+            string? newAccessToken = null;
+            string? newRefreshToken = null;
 
-            var refreshBody = await refreshResponse.Content.ReadAsStringAsync();
-            _logger.LogWarning("RefreshToken: Refresh response body: {Body}", refreshBody);
+            if (refreshResponse.Headers.TryGetValues("Set-Cookie", out var setCookieHeaders))
+            {
+                foreach (var header in setCookieHeaders)
+                {
+                    if (header.StartsWith(".AspNet.Identity=", StringComparison.OrdinalIgnoreCase))
+                    {
+                        newAccessToken = header.Split('=', 2)[1].Split(';')[0];
+                    }
+                    else if (header.StartsWith(".AspNet.Identity.Refresh=", StringComparison.OrdinalIgnoreCase))
+                    {
+                        newRefreshToken = header.Split('=', 2)[1].Split(';')[0];
+                    }
+                }
+            }
 
             if (!string.IsNullOrEmpty(newAccessToken))
             {
-                _logger.LogWarning(newAccessToken);
-                _logger.LogWarning(newRefreshToken);
-                _logger.LogWarning("RefreshToken: Refresh succeeded, new tokens obtained from cookies");
+                _logger.LogWarning("RefreshToken: Refresh succeeded, new tokens obtained from Set-Cookie headers");
                 return TokenValidationResult.Refreshed(newAccessToken, newRefreshToken);
             }
+
+            _logger.LogWarning("RefreshToken: No new tokens found in Set-Cookie headers");
             return TokenValidationResult.Failure();
         }
         catch (Exception ex)
