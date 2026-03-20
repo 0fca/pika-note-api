@@ -25,9 +25,8 @@ public class PikaCoreAuthorizationFilter : IAsyncAuthorizationFilter
     public async Task OnAuthorizationAsync(AuthorizationFilterContext context)
     {
         var identityCookie = context.HttpContext.Request.Cookies[".AspNet.Identity"];
-        var refreshCookie = context.HttpContext.Request.Cookies[".AspNet.Identity.Refresh"];
 
-        var result = await _securityService.CheckTokenValidityAsync(identityCookie, refreshCookie);
+        var result = await _securityService.CheckTokenValidityAsync(identityCookie);
         if (!result.IsValid)
         {
             context.Result = new UnauthorizedResult();

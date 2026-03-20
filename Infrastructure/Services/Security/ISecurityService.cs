@@ -9,5 +9,6 @@ public interface ISecurityService
 {
     public Task ConfigureAccessToken(string token, IEnumerable<Claim> claims);
     public Task<Dictionary<Guid, bool>?> HasNotesAccess(string token, Dictionary<Guid, Guid> guids);
-    public Task<TokenValidationResult> CheckTokenValidityAsync(string? identityCookie, string? refreshCookie);
+    public Task<TokenValidationResult> CheckTokenValidityAsync(string? identityCookie);
+    public Task<TokenValidationResult> RefreshTokenAsync(string? identityCookie, string? refreshCookie);
 }

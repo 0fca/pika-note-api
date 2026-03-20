@@ -63,20 +63,11 @@ public class SecurityService : ISecurityService
         return result;
     }
     
-    public async Task<TokenValidationResult> CheckTokenValidityAsync(string? identityCookie, string? refreshCookie)
+    public async Task<TokenValidationResult> CheckTokenValidityAsync(string? identityCookie)
     {
-        var hasRefreshCookie = !string.IsNullOrEmpty(refreshCookie);
-
         if (string.IsNullOrEmpty(identityCookie))
         {
-            if (!hasRefreshCookie)
-            {
-                _logger.LogWarning("CheckTokenValidity: identity cookie is null or empty and no refresh cookie present");
-                return TokenValidationResult.Failure();
-            }
-
-            _logger.LogWarning("CheckTokenValidity: identity cookie is null or empty but refresh cookie present, attempting direct refresh");
-            return await AttemptDirectRefreshAsync(refreshCookie!);
+            return TokenValidationResult.Failure();
         }
 
         try
@@ -87,26 +78,18 @@ public class SecurityService : ISecurityService
             if (jwst == null)
             {
                 _logger.LogWarning("CheckTokenValidity: failed to parse JWT from identity cookie");
-                return hasRefreshCookie 
-                    ? await AttemptDirectRefreshAsync(refreshCookie!) 
-                    : TokenValidationResult.Failure();
-            }
-            if (jwst.ValidTo <= DateTime.UtcNow && !hasRefreshCookie)
-            {
-                _logger.LogWarning("CheckTokenValidity: access token expired at {ValidTo} and no refresh cookie present", jwst.ValidTo);
                 return TokenValidationResult.Failure();
             }
-            if (jwst.ValidTo <= DateTime.UtcNow && hasRefreshCookie)
+            if (jwst.ValidTo <= DateTime.UtcNow)
             {
-                _logger.LogWarning("CheckTokenValidity: access token expired at {ValidTo} but refresh cookie present, proceeding to PikaCore", jwst.ValidTo);
+                _logger.LogWarning("CheckTokenValidity: access token expired at {ValidTo}", jwst.ValidTo);
+                return TokenValidationResult.Failure();
             }
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "CheckTokenValidity: exception while parsing JWT");
-            return hasRefreshCookie 
-                ? await AttemptDirectRefreshAsync(refreshCookie!) 
-                : TokenValidationResult.Failure();
+            return TokenValidationResult.Failure();
         }
 
         try
@@ -118,20 +101,10 @@ public class SecurityService : ISecurityService
                 BaseAddress = new Uri(_configuration.GetConnectionString("PikaCore"))
             };
             cookieContainer.Add(httpClient.BaseAddress!, new Cookie(".AspNet.Identity", identityCookie));
-            if (hasRefreshCookie)
-            {
-                cookieContainer.Add(httpClient.BaseAddress!, new Cookie(".AspNet.Identity.Refresh", refreshCookie!));
-            }
 
             _logger.LogWarning("CheckTokenValidity: calling PikaCore Status endpoint at {BaseAddress}/Identity/Gateway/Status", httpClient.BaseAddress);
             var response = await httpClient.GetAsync("/Identity/Gateway/Status");
-            _logger.LogWarning("CheckTokenValidity: first call returned {StatusCode}", (int)response.StatusCode);
-            
-            if (response.StatusCode == HttpStatusCode.Unauthorized && hasRefreshCookie)
-            {
-                _logger.LogWarning("CheckTokenValidity: Status returned 401, attempting token refresh via /Identity/Gateway/Refresh");
-                return await AttemptTokenRefreshAsync(httpClient, cookieContainer);
-            }
+            _logger.LogWarning("CheckTokenValidity: call returned {StatusCode}", (int)response.StatusCode);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -145,10 +118,6 @@ public class SecurityService : ISecurityService
             var isAuthenticated = doc.RootElement.TryGetProperty("isAuthenticated", out var authEl)
                                   && (authEl.ValueKind == JsonValueKind.True || authEl.ValueKind == JsonValueKind.False)
                                   && authEl.GetBoolean();
-            if(!isAuthenticated && hasRefreshCookie) {
-                _logger.LogWarning("CheckTokenValidity: Status returned isAuthenticated=false with refresh cookie present, attempting token refresh");
-                return await AttemptTokenRefreshAsync(httpClient, cookieContainer);
-            }
             var hasUsername = doc.RootElement.TryGetProperty("username", out var userEl)
                              && userEl.ValueKind == JsonValueKind.String
                              && !string.IsNullOrEmpty(userEl.GetString());
@@ -165,8 +134,14 @@ public class SecurityService : ISecurityService
         }
     }
 
-    private async Task<TokenValidationResult> AttemptDirectRefreshAsync(string refreshCookie)
+    public async Task<TokenValidationResult> RefreshTokenAsync(string? identityCookie, string? refreshCookie)
     {
+        if (string.IsNullOrEmpty(refreshCookie))
+        {
+            _logger.LogWarning("RefreshToken: no refresh cookie present");
+            return TokenValidationResult.Failure();
+        }
+
         try
         {
             var cookieContainer = new CookieContainer();
@@ -175,27 +150,18 @@ public class SecurityService : ISecurityService
             {
                 BaseAddress = new Uri(_configuration.GetConnectionString("PikaCore"))
             };
+            if (!string.IsNullOrEmpty(identityCookie))
+            {
+                cookieContainer.Add(httpClient.BaseAddress!, new Cookie(".AspNet.Identity", identityCookie));
+            }
             cookieContainer.Add(httpClient.BaseAddress!, new Cookie(".AspNet.Identity.Refresh", refreshCookie));
 
-            return await AttemptTokenRefreshAsync(httpClient, cookieContainer);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "CheckTokenValidity: exception during direct refresh attempt");
-            return TokenValidationResult.Failure();
-        }
-    }
-
-    private async Task<TokenValidationResult> AttemptTokenRefreshAsync(HttpClient httpClient, CookieContainer cookieContainer)
-    {
-        try
-        {
             var refreshResponse = await httpClient.PostAsync("/Identity/Gateway/Refresh", null);
-            _logger.LogWarning("CheckTokenValidity: Refresh call returned {StatusCode}", (int)refreshResponse.StatusCode);
+            _logger.LogWarning("RefreshToken: Refresh call returned {StatusCode}", (int)refreshResponse.StatusCode);
 
             if (!refreshResponse.IsSuccessStatusCode)
             {
-                _logger.LogWarning("CheckTokenValidity: Refresh endpoint returned non-success status {StatusCode}", (int)refreshResponse.StatusCode);
+                _logger.LogWarning("RefreshToken: Refresh endpoint returned non-success status {StatusCode}", (int)refreshResponse.StatusCode);
                 return TokenValidationResult.Failure();
             }
 
@@ -205,12 +171,12 @@ public class SecurityService : ISecurityService
 
             if (!string.IsNullOrEmpty(newAccessToken))
             {
-                _logger.LogWarning("CheckTokenValidity: Refresh succeeded, new tokens obtained from cookies");
+                _logger.LogWarning("RefreshToken: Refresh succeeded, new tokens obtained from cookies");
                 return TokenValidationResult.Refreshed(newAccessToken, newRefreshToken);
             }
 
             var refreshBody = await refreshResponse.Content.ReadAsStringAsync();
-            _logger.LogWarning("CheckTokenValidity: Refresh response body: {Body}", refreshBody);
+            _logger.LogWarning("RefreshToken: Refresh response body: {Body}", refreshBody);
 
             if (!string.IsNullOrEmpty(refreshBody))
             {
@@ -224,17 +190,17 @@ public class SecurityService : ISecurityService
 
                 if (!string.IsNullOrEmpty(accessToken))
                 {
-                    _logger.LogWarning("CheckTokenValidity: Refresh succeeded, new tokens obtained from response body");
+                    _logger.LogWarning("RefreshToken: Refresh succeeded, new tokens obtained from response body");
                     return TokenValidationResult.Refreshed(accessToken, refreshToken);
                 }
             }
 
-            _logger.LogWarning("CheckTokenValidity: Refresh endpoint returned success but no tokens found in response");
+            _logger.LogWarning("RefreshToken: Refresh endpoint returned success but no tokens found in response");
             return TokenValidationResult.Failure();
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "CheckTokenValidity: exception during Refresh call");
+            _logger.LogWarning(ex, "RefreshToken: exception during Refresh call");
             return TokenValidationResult.Failure();
         }
     }

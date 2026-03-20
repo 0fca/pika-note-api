@@ -55,7 +55,7 @@ public class SecurityController : Controller
             return Unauthorized();
         }
 
-        var result = await _securityService.CheckTokenValidityAsync(identityCookie, refreshCookie);
+        var result = await _securityService.RefreshTokenAsync(identityCookie, refreshCookie);
         if (!result.IsValid)
         {
             var deletionOptions = new CookieOptions
