@@ -96,6 +96,7 @@ namespace PikaNoteAPI
             );
             
             services.AddTransient<ISecurityService, SecurityService>();
+            services.AddHttpContextAccessor();
             services.AddSingleton<IChatToolService, ChatToolService>();
             services.AddTransient<BucketRepository>();
             services.AddSingleton<NoteStorageHttpClient>();

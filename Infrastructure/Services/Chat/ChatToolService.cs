@@ -1,21 +1,21 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using OpenIddict.Client;
 
 namespace PikaNoteAPI.Infrastructure.Services.Chat;
 
 public class ChatToolService : IChatToolService
 {
     private readonly IConfiguration _configuration;
-    private readonly OpenIddictClientService _openIddictClientService;
+    private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ILogger<ChatToolService> _logger;
 
     private List<ChatToolDto>? _cachedTools;
@@ -24,11 +24,11 @@ public class ChatToolService : IChatToolService
 
     public ChatToolService(
         IConfiguration configuration,
-        OpenIddictClientService openIddictClientService,
+        IHttpContextAccessor httpContextAccessor,
         ILogger<ChatToolService> logger)
     {
         _configuration = configuration;
-        _openIddictClientService = openIddictClientService;
+        _httpContextAccessor = httpContextAccessor;
         _logger = logger;
     }
 
@@ -41,19 +41,21 @@ public class ChatToolService : IChatToolService
 
         try
         {
-            var serviceToken = await _openIddictClientService.AuthenticateWithClientCredentialsAsync(
-                new OpenIddictClientModels.ClientCredentialsAuthenticationRequest
-                {
-                    RegistrationId = "base"
-                });
+            var identityToken = _httpContextAccessor.HttpContext?.Request.Cookies[".AspNet.Identity"];
+            if (string.IsNullOrEmpty(identityToken))
+            {
+                _logger.LogError("ChatToolService: No .AspNet.Identity cookie present");
+                return _cachedTools ?? [];
+            }
 
             var chatApiUrl = _configuration.GetConnectionString("PikaChatAPI");
-            using var httpClient = new HttpClient
+            var cookieContainer = new CookieContainer();
+            cookieContainer.Add(new Uri(chatApiUrl!), new Cookie(".AspNet.Identity", identityToken));
+            using var handler = new HttpClientHandler { CookieContainer = cookieContainer };
+            using var httpClient = new HttpClient(handler)
             {
                 BaseAddress = new Uri(chatApiUrl!)
             };
-            httpClient.DefaultRequestHeaders.Authorization =
-                new AuthenticationHeaderValue("Bearer", serviceToken.AccessToken);
 
             var publicTask = httpClient.GetAsync("/v1/Tool?visibility=public");
             var privateTask = httpClient.GetAsync("/v1/Tool?visibility=private");
