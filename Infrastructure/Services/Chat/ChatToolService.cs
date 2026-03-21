@@ -55,22 +55,35 @@ public class ChatToolService : IChatToolService
             httpClient.DefaultRequestHeaders.Authorization =
                 new AuthenticationHeaderValue("Bearer", serviceToken.AccessToken);
 
-            var response = await httpClient.GetAsync("/v1/Tool?visibility=public");
-            if (!response.IsSuccessStatusCode)
+            var publicTask = httpClient.GetAsync("/v1/Tool?visibility=public");
+            var privateTask = httpClient.GetAsync("/v1/Tool?visibility=private");
+            await Task.WhenAll(publicTask, privateTask);
+
+            var merged = new List<ChatToolDto>();
+
+            foreach (var response in new[] { publicTask.Result, privateTask.Result })
             {
-                _logger.LogWarning("ChatToolService: Failed to fetch tools from PikaChat API, status {StatusCode}", (int)response.StatusCode);
-                return _cachedTools ?? [];
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogWarning("ChatToolService: Failed to fetch tools from PikaChat API, status {StatusCode}", (int)response.StatusCode);
+                    continue;
+                }
+
+                var body = await response.Content.ReadAsStringAsync();
+                var result = JsonSerializer.Deserialize<ToolsResponse>(body);
+                if (result?.Tools != null)
+                {
+                    merged.AddRange(result.Tools.Select(t => new ChatToolDto
+                    {
+                        Uid = t.Uid,
+                        Name = t.Name,
+                        Description = t.Description,
+                        Type = t.Type
+                    }));
+                }
             }
 
-            var body = await response.Content.ReadAsStringAsync();
-            var result = JsonSerializer.Deserialize<ToolsResponse>(body);
-            _cachedTools = result?.Tools?.Select(t => new ChatToolDto
-            {
-                Uid = t.Uid,
-                Name = t.Name,
-                Description = t.Description,
-                Type = t.Type
-            }).ToList() ?? [];
+            _cachedTools = merged;
             _cacheExpiry = DateTime.UtcNow.Add(CacheDuration);
 
             _logger.LogInformation("ChatToolService: Cached {Count} tools from PikaChat API", _cachedTools.Count);
