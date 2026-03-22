@@ -87,11 +87,22 @@ namespace PikaNoteAPI.Adapters.Database.Note.Repositories
         {
             var sanitizedQuery = query.Replace("'", "''");
             var results = new List<Pika.Domain.Notes.Data.Note>();
-            var queryDefinition = new QueryDefinition(
-                "SELECT * FROM c WHERE c.bucketId = @bucketId AND CONTAINS(LOWER(c.humanName), LOWER(@query)) OFFSET 0 LIMIT @limit")
-                .WithParameter("@bucketId", bucketId)
-                .WithParameter("@query", sanitizedQuery)
-                .WithParameter("@limit", maxResults);
+            QueryDefinition queryDefinition;
+            if (sanitizedQuery.Trim() == "*")
+            {
+                queryDefinition = new QueryDefinition(
+                    "SELECT * FROM c WHERE c.bucketId = @bucketId OFFSET 0 LIMIT @limit")
+                    .WithParameter("@bucketId", bucketId)
+                    .WithParameter("@limit", maxResults);
+            }
+            else
+            {
+                queryDefinition = new QueryDefinition(
+                    "SELECT * FROM c WHERE c.bucketId = @bucketId AND CONTAINS(LOWER(c.humanName), LOWER(@query)) OFFSET 0 LIMIT @limit")
+                    .WithParameter("@bucketId", bucketId)
+                    .WithParameter("@query", sanitizedQuery)
+                    .WithParameter("@limit", maxResults);
+            }
             var iterator = this._container.GetItemQueryIterator<Pika.Domain.Notes.Data.Note>(queryDefinition);
             while (iterator.HasMoreResults)
             {
