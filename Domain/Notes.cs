@@ -107,13 +107,14 @@ namespace PikaNoteAPI.Domain
             }
         }
 
-        public async Task<IList<Note>> SearchNotes(string token, string bucketId, string query, int maxResults = 20)
+        public async Task<IList<Note>> SearchNotes(string token, string bucketId, string query, int maxResults = 20, int page = 1)
         {
             if (string.IsNullOrEmpty(bucketId) || string.IsNullOrEmpty(query))
             {
                 return [];
             }
-            var notes = (await this._noteRepository.SearchByNameAsync(bucketId, query, maxResults)).ToList();
+            var offset = (page - 1) * maxResults;
+            var notes = (await this._noteRepository.SearchByNameAsync(bucketId, query, maxResults, offset)).ToList();
             return notes;
         }
 
