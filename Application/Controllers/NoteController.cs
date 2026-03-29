@@ -56,7 +56,7 @@ namespace PikaNoteAPI.Application.Controllers
 
         [HttpPost]
         [Route("/notes")]
-        //[PikaCoreAuthorize]
+        [PikaCoreAuthorize]
         [Authorize(Policy =  "AdministratorOrModerator")]
         public async Task<IActionResult> Add(
             [FromBody] NoteAddUpdateDto? note,
@@ -181,7 +181,8 @@ namespace PikaNoteAPI.Application.Controllers
         public async Task<IActionResult> Search(
             [FromQuery] string bucketId,
             [FromQuery] string query,
-            [FromQuery] int maxResults = 20
+            [FromQuery] int maxResults = 20,
+            [FromQuery] int page = 1
         )
         {
             var token = HttpContext.Request.Cookies[".AspNet.Identity"]!;
@@ -193,7 +194,8 @@ namespace PikaNoteAPI.Application.Controllers
             {
                 return BadRequest(new ApiResponse { Success = false, Message = "Query and bucketId are required" });
             }
-            var notes = await _notes.SearchNotes(token, bucketId, query, maxResults);
+            if (page < 1) page = 1;
+            var notes = await _notes.SearchNotes(token, bucketId, query, maxResults, page);
             return Ok(new ApiResponse
             {
                 Success = true,

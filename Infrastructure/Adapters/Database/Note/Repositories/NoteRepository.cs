@@ -83,15 +83,28 @@ namespace PikaNoteAPI.Adapters.Database.Note.Repositories
             return queryable.Skip(offset).Take(pageSize).ToList();
         }
 
-        public async Task<IEnumerable<Pika.Domain.Notes.Data.Note>> SearchByNameAsync(string bucketId, string query, int maxResults = 20)
+        public async Task<IEnumerable<Pika.Domain.Notes.Data.Note>> SearchByNameAsync(string bucketId, string query, int maxResults = 20, int offset = 0)
         {
             var sanitizedQuery = query.Replace("'", "''");
             var results = new List<Pika.Domain.Notes.Data.Note>();
-            var queryDefinition = new QueryDefinition(
-                "SELECT * FROM c WHERE c.bucketId = @bucketId AND CONTAINS(LOWER(c.humanName), LOWER(@query)) OFFSET 0 LIMIT @limit")
-                .WithParameter("@bucketId", bucketId)
-                .WithParameter("@query", sanitizedQuery)
-                .WithParameter("@limit", maxResults);
+            QueryDefinition queryDefinition;
+            if (sanitizedQuery.Trim() == "*")
+            {
+                queryDefinition = new QueryDefinition(
+                    "SELECT * FROM c WHERE c.bucketId = @bucketId OFFSET @offset LIMIT @limit")
+                    .WithParameter("@bucketId", bucketId)
+                    .WithParameter("@offset", offset)
+                    .WithParameter("@limit", maxResults);
+            }
+            else
+            {
+                queryDefinition = new QueryDefinition(
+                    "SELECT * FROM c WHERE c.bucketId = @bucketId AND CONTAINS(LOWER(c.humanName), LOWER(@query)) OFFSET @offset LIMIT @limit")
+                    .WithParameter("@bucketId", bucketId)
+                    .WithParameter("@query", sanitizedQuery)
+                    .WithParameter("@offset", offset)
+                    .WithParameter("@limit", maxResults);
+            }
             var iterator = this._container.GetItemQueryIterator<Pika.Domain.Notes.Data.Note>(queryDefinition);
             while (iterator.HasMoreResults)
             {

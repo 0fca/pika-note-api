@@ -19,6 +19,7 @@ using PikaNoteAPI.Domain;
 using PikaNoteAPI.Domain.Contract;
 using PikaNoteAPI.Infrastructure.Adapters.Http;
 using PikaNoteAPI.Infrastructure.Adapters.Http.Repositories;
+using PikaNoteAPI.Infrastructure.Services.Chat;
 using PikaNoteAPI.Infrastructure.Services.Security;
 
 namespace PikaNoteAPI
@@ -95,6 +96,8 @@ namespace PikaNoteAPI
             );
             
             services.AddTransient<ISecurityService, SecurityService>();
+            services.AddHttpContextAccessor();
+            services.AddSingleton<IChatToolService, ChatToolService>();
             services.AddTransient<BucketRepository>();
             services.AddSingleton<NoteStorageHttpClient>();
             services.AddSingleton<INotes>(
