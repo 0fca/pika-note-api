@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data;
 using System.Security.Authentication;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -85,6 +86,12 @@ namespace PikaNoteAPI.Application.Controllers
                 apiResponse.Message = a.Message;
                 apiResponse.Success = false;
                 return StatusCode(401, apiResponse);
+            }
+            catch(InvalidConstraintException ice)
+            {
+                apiResponse.Message = ice.Message;
+                apiResponse.Success = false;
+                return StatusCode(422, apiResponse);
             }
             catch(Exception ex)
             {
