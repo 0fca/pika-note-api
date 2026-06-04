@@ -6,7 +6,6 @@ using Microsoft.Extensions.Caching.Distributed;
 using OpenIddict.Client;
 using PikaNoteAPI.Domain.Contract;
 using PikaNoteAPI.Infrastructure.Services.Security;
-using Serilog;
 
 namespace PikaNoteAPI.Application.Middlewares;
 
@@ -48,7 +47,7 @@ public class NoteFileStorageSecurity
                 {
                     AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(15)
                 });
-                Log.Information("Obtained new service token for note file storage security.");
+                Console.WriteLine("Obtained new service token for note file storage security.");
             }
             var handler = new JwtSecurityTokenHandler();
             var jsonToken = handler.ReadToken(token);
@@ -70,7 +69,7 @@ public class NoteFileStorageSecurity
         }
         catch (Exception ex)
         {
-            Log.Warning(ex, "Failed to read cached service token, treating as expired.");
+            Console.WriteLine($"Failed to read cached service token, treating as expired. {ex.Message}");
             return true;
         }
     }

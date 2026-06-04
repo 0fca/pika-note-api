@@ -59,7 +59,7 @@ namespace PikaNoteAPI.Domain
                     return false;
                 }
 
-                var note = n.ToNote(id);
+                var note = n.ToNote(id, currentNote.Type);
                 var result = await this._noteFileRepository.UpdateNoteObject(
                     token,
                     currentNote.MachineName,

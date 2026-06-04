@@ -22,6 +22,9 @@ public class NoteDTO
    [JsonProperty(PropertyName = "content")]
    public string Content { get; set; }
 
+   [JsonProperty(PropertyName = "type")]
+   public string Type { get; set; }
+ 
    public static NoteDTO CreateFromNote(Note n, string content)
    {
       var ndto = new NoteDTO
@@ -30,7 +33,8 @@ public class NoteDTO
           HumanName = n.HumanName,
           MachineName = n.MachineName,
           BucketId = n.BucketId,
-          Content = content
+          Content = content,
+          Type = n.Type
       };
       return ndto;
    }

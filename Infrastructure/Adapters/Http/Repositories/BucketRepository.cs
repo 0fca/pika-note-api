@@ -1,6 +1,5 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 using System;
-using Marten;
 using System.Collections.Generic;
 using PikaNoteAPI.Infrastructure.Adapters.Http.DTO;
 using PikaNoteAPI.Domain.Models.DTO;
@@ -18,7 +17,7 @@ namespace PikaNoteAPI.Infrastructure.Adapters.Http.Repositories
         public async Task<List<BucketDescriptorDTO>> GetBuckets(string token)
         {
             var buckets = await this._noteStorageHttpClient.GetBuckets(token);
-            if (buckets.IsEmpty() || buckets == null)
+            if (buckets == null || buckets.Count == 0)
             {
                 throw new AggregateException("There are no buckets");
             }
