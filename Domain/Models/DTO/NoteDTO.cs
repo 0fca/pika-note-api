@@ -23,7 +23,7 @@ public class NoteDTO
    public string Content { get; set; }
 
    [JsonProperty(PropertyName = "type")]
-   public string Type { get; set; }
+   public string Type { get; set; } = NoteType.Note.ToSerializedValue();
  
    public static NoteDTO CreateFromNote(Note n, string content)
    {

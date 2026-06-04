@@ -6,7 +6,7 @@ namespace Pika.Domain.Notes.Data;
 
 public class Note
 {
-    private string _type = string.Empty;
+    private string _type = NoteType.Note.ToSerializedValue();
 
     [JsonProperty(PropertyName = "id")]
     [JsonPropertyName("id")]
@@ -32,7 +32,7 @@ public class Note
     [JsonPropertyName("type")]
     public string Type
     {
-        get => string.IsNullOrWhiteSpace(_type) ? NoteType.Note.ToSerializedValue() : _type;
+        get => _type;
         private set => _type = string.IsNullOrWhiteSpace(value) ? NoteType.Note.ToSerializedValue() : value;
     }
 

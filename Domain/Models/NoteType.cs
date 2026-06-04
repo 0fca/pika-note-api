@@ -16,7 +16,7 @@ public static class NoteTypeExtensions
         {
             NoteType.Note => "note",
             NoteType.Sheet => "sheet",
-            _ => throw new ArgumentOutOfRangeException(nameof(noteType), noteType, null)
+            _ => throw new ArgumentOutOfRangeException(nameof(noteType), noteType, "Unsupported note type.")
         };
     }
 
