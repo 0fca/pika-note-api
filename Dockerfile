@@ -1,4 +1,4 @@
-FROM pikanoteapiacr.azurecr.io/fcapikadomain:56 AS build-env
+FROM 192.168.1.252:5030/pika-cloud/pika.domain AS  build-env
 WORKDIR /app
 
 # Copy csproj and restore as distinct layers
