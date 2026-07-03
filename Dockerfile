@@ -19,5 +19,5 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 COPY --from=build-env /app/out .
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:5000/health || exit 1
+  CMD curl --insecure -f https://localhost:443/health || exit 1
 ENTRYPOINT ["dotnet", "PikaNoteAPI.dll"]
