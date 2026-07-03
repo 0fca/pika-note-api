@@ -10,9 +10,14 @@ COPY . .
 RUN dotnet publish PikaNoteAPI.csproj -c Release -o out
 
 # Build runtime image
-FROM mcr.microsoft.com/dotnet/aspnet:8.0
+FROM mcr.microsoft.com/dotnet/aspnet:8.0-jammy
 EXPOSE 80
 EXPOSE 443
 WORKDIR /app
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl file \
+    && rm -rf /var/lib/apt/lists/*
 COPY --from=build-env /app/out .
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:5000/health || exit 1
 ENTRYPOINT ["dotnet", "PikaNoteAPI.dll"]
