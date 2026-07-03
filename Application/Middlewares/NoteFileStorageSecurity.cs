@@ -3,10 +3,10 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Logging;
 using OpenIddict.Client;
 using PikaNoteAPI.Domain.Contract;
 using PikaNoteAPI.Infrastructure.Services.Security;
-using Serilog;
 
 namespace PikaNoteAPI.Application.Middlewares;
 
@@ -17,12 +17,14 @@ public class NoteFileStorageSecurity
     private readonly OpenIddictClientService _openIddictClientService;
     private readonly INotes _notes;
     private readonly IDistributedCache _cache;
+    private readonly ILogger<NoteFileStorageSecurity> _logger;
     
     public NoteFileStorageSecurity(
         INotes notes,
         ISecurityService securityService,
         OpenIddictClientService openIddictClientService,
         IDistributedCache cache,
+        ILogger<NoteFileStorageSecurity> logger,
         RequestDelegate next)
     {
         this._securityService = securityService;
@@ -30,6 +32,7 @@ public class NoteFileStorageSecurity
         this._notes = notes;
         this._openIddictClientService = openIddictClientService;
         this._cache = cache;
+        this._logger = logger;
     }
     
     public async Task InvokeAsync(HttpContext context)
@@ -48,7 +51,7 @@ public class NoteFileStorageSecurity
                 {
                     AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(15)
                 });
-                Log.Information("Obtained new service token for note file storage security.");
+                _logger.LogInformation("Obtained new service token for note file storage security.");
             }
             var handler = new JwtSecurityTokenHandler();
             var jsonToken = handler.ReadToken(token);
@@ -60,7 +63,7 @@ public class NoteFileStorageSecurity
         await _next(context);
     }
 
-    private static bool IsTokenExpired(string token)
+    private bool IsTokenExpired(string token)
     {
         try
         {
@@ -70,7 +73,7 @@ public class NoteFileStorageSecurity
         }
         catch (Exception ex)
         {
-            Log.Warning(ex, "Failed to read cached service token, treating as expired.");
+            _logger.LogWarning(ex, "Failed to read cached service token, treating as expired.");
             return true;
         }
     }

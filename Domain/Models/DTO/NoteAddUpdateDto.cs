@@ -1,8 +1,8 @@
 ﻿using System.Data;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
-using JasperFx.Core;
 using Newtonsoft.Json;
+using Pika.Domain.Notes.Data;
 
 namespace PikaNoteAPI.Domain.Models.DTO
 {
@@ -14,6 +14,9 @@ namespace PikaNoteAPI.Domain.Models.DTO
         [JsonProperty(PropertyName = "content")]
         
         public string Content { get; set; }
+
+        [JsonProperty(PropertyName = "type")]
+        public string? Type { get; set; }
        
         [JsonIgnore]
         
@@ -22,12 +25,11 @@ namespace PikaNoteAPI.Domain.Models.DTO
 
         public Pika.Domain.Notes.Data.Note NewNote()
         {
-            var n = new Pika.Domain.Notes.Data.Note
-            {
-                HumanName = this.Name,
-                MachineName = "",
-                BucketId = this.BucketId
-            };
+            var n = new Pika.Domain.Notes.Data.Note();
+            n.UpdateHumanName(this.Name);
+            n.UpdateMachineName("");
+            n.UpdateBucketId(this.BucketId);
+            n.UpdateType(GetNoteType());
             n.GenerateId();
             Regex regex = NoteNameRegex();
             if(!regex.IsMatch(n.HumanName))
@@ -37,9 +39,12 @@ namespace PikaNoteAPI.Domain.Models.DTO
             return n;
         }
 
-        public Pika.Domain.Notes.Data.Note ToNote(string id)
+        public Pika.Domain.Notes.Data.Note ToNote(string id, string? currentType = null)
         {
-            var n = new Pika.Domain.Notes.Data.Note {Id = id, HumanName = this.Name};
+            var n = new Pika.Domain.Notes.Data.Note();
+            n.AssignId(id);
+            n.UpdateHumanName(this.Name);
+            n.UpdateType(GetNoteType(currentType));
             return n;
         }
 
@@ -51,6 +56,16 @@ namespace PikaNoteAPI.Domain.Models.DTO
         public string GetBucketId()
         {
             return this.BucketId;
+        }
+
+        public NoteType GetNoteType(string? fallbackType = null)
+        {
+            if (!string.IsNullOrWhiteSpace(Type))
+            {
+                return NoteTypeExtensions.FromSerializedValue(Type);
+            }
+
+            return NoteTypeExtensions.FromSerializedValue(fallbackType);
         }
 
         [GeneratedRegex(@"^[\w\s{,.#[\]:()}@]+$")]
