@@ -10,7 +10,7 @@ COPY . .
 RUN dotnet publish PikaNoteAPI.csproj -c Release -o out
 
 # Build runtime image
-FROM mcr.microsoft.com/dotnet/aspnet:8.0-jammy
+FROM mcr.microsoft.com/dotnet/aspnet:8.0-noble
 EXPOSE 80
 EXPOSE 443
 WORKDIR /app
