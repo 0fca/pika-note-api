@@ -4,6 +4,7 @@ using System.Security.Claims;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using System.Linq;
 using PikaNoteAPI.Application.Extensions.Enums;
 
 namespace PikaNoteAPI.Application.Middlewares;
@@ -22,31 +23,25 @@ public class MapJwtClaimsToIdentityMiddleware
         var token = context.Request.Cookies[".AspNet.Identity"];
         if (string.IsNullOrEmpty(token))
         {
+            context.User.AddClaim(ClaimTypes.Role, RoleString.User);
             await _next(context);
             return;
         }
         var handler = new JwtSecurityTokenHandler();
         var jsonToken = handler.ReadToken(token);
         var jwst = jsonToken as JwtSecurityToken;
-
-        var identity = new ClaimsIdentity("PikaCore");
-        foreach (var claim in jwst!.Claims)
+        jwst!.Claims.ToList().ForEach(c =>
         {
-            if (claim.Type is KeycloakClaimTypes.RealmAccess)
+            if (c.Type is not (KeycloakClaimTypes.Roles or KeycloakClaimTypes.RealmAccess)) return;
+            var roleClaimTypeName = context.User.Identities.First().RoleClaimType;
+            const string roleClaimStandardName = ClaimTypes.Role;
+            var roles = JsonSerializer.Deserialize<Dictionary<string, IList<string>>>(c.Value)["roles"];
+            foreach (var role in roles)
             {
-                var roles = JsonSerializer.Deserialize<Dictionary<string, IList<string>>>(claim.Value)!["roles"];
-                foreach (var role in roles)
-                {
-                    identity.AddClaim(new Claim(ClaimTypes.Role, role));
-                }
+                context.User.AddClaim(roleClaimTypeName, role);
+                context.User.AddClaim(roleClaimStandardName, role);
             }
-            else
-            {
-                identity.AddClaim(new Claim(claim.Type, claim.Value, claim.ValueType));
-            }
-        }
-        context.User = new ClaimsPrincipal(identity);
-
+        });
         await _next(context);
     }
 }
