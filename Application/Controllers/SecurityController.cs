@@ -130,7 +130,7 @@ public class SecurityController : Controller
             return fallback;
         }
 
-        var iatClaim = jwt.Payload["iat"];
+        var iatClaim = jwt.Payload["iat"]?.ToString();
         var expClaim = jwt.Claims.FirstOrDefault(c => c.Type == "exp")?.Value;
         if (!long.TryParse(iatClaim, out long iat) || !long.TryParse(expClaim, out long exp))
         {
