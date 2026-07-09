@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using PikaNoteAPI.Application.Filters;
 using PikaNoteAPI.Infrastructure.Services.Security;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace PikaNoteAPI.Application.Controllers;
 
@@ -16,15 +17,17 @@ public class SecurityController : Controller
 {
     private readonly IConfiguration _configuration;
     private readonly ISecurityService _securityService;
+    private readonly ILogger<SecurityController> _logger;
     private const string DefaultCookieDomain = ".lukas-bownik.net";
     private static readonly TimeSpan DefaultMaxAge = TimeSpan.FromMinutes(2);
     private static readonly TimeSpan DefaultRefreshMaxAge = TimeSpan.FromDays(5);
     private static readonly int RefreshMaxAgeSeconds = 432000;
 
-    public SecurityController(IConfiguration configuration, ISecurityService securityService)
+    public SecurityController(IConfiguration configuration, ISecurityService securityService, ILogger<SecurityController> logger)
     {
         _configuration = configuration;
         _securityService = securityService;
+        _logger = logger;
     }
 
     [AllowAnonymous]
@@ -115,13 +118,15 @@ public class SecurityController : Controller
             var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
             if (handler.ReadToken(accessToken) is not System.IdentityModel.Tokens.Jwt.JwtSecurityToken parsedToken)
             {
+                _logger.LogWarning("Using fallback, whatever passed as accessToken wouldnt match type definition");
                 return fallback;
             }
 
             jwt = parsedToken;
         }
-        catch (ArgumentException)
+        catch (ArgumentException e)
         {
+            _logger.LogWarning("Using fallback, because of: {Exception}", e.Message);
             return fallback;
         }
 
@@ -129,12 +134,14 @@ public class SecurityController : Controller
         var expClaim = jwt.Claims.FirstOrDefault(c => c.Type == "exp")?.Value;
         if (!long.TryParse(iatClaim, out long iat) || !long.TryParse(expClaim, out long exp))
         {
+            _logger.LogWarning("Using fallback, because of: {IssuedAt}, {ExpiredAt} could not be parsed", iatClaim, expClaim);
             return fallback;
         }
 
         long keycloakCookieLifetime = exp - iat;
         if (keycloakCookieLifetime <= 0)
         {
+            _logger.LogWarning("Using fallback, because Keycloak lifetime has been calculated as zero or less for: {IssuedAt}, {ExpiredAt}", iat, exp);
             return fallback;
         }
 
