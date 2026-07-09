@@ -41,18 +41,22 @@ namespace PikaNoteAPI.Application.Controllers
             }
 
             var token = HttpContext.Request.Cookies[".AspNet.Identity"]!;
-            var note = await _notes.GetNoteByIdAsUser(token, id);
+            try{
+                var note = await _notes.GetNoteByIdAsUser(token, id);
             
-            if (note == null)
-            {
+                if (note == null)
+                {
+                    return NotFound();
+                }
+                var apiResponse = new ApiResponse
+                {
+                    Success = true,
+                    Payload = note
+                };
+                return Ok(apiResponse);
+            }catch(ApplicationException){
                 return NotFound();
             }
-            var apiResponse = new ApiResponse
-            {
-                Success = true,
-                Payload = note
-            };
-            return Ok(apiResponse);
         }
 
         [HttpPost]
