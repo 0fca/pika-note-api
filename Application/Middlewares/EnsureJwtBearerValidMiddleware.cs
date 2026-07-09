@@ -14,10 +14,15 @@ public class EnsureJwtBearerValidMiddleware
     private readonly IConfiguration _configuration;
     private readonly ILogger<EnsureJwtBearerValidMiddleware> _logger;
 
-    public EnsureJwtBearerValidMiddleware(RequestDelegate next, IConfiguration configuration)
+    public EnsureJwtBearerValidMiddleware(
+        RequestDelegate next, 
+        IConfiguration configuration,
+        ILogger<EnsureJwtBearerValidMiddleware> logger
+    )
     {
         _next = next;
         _configuration = configuration;
+        _logger = logger;
     }
 
     public async Task InvokeAsync(HttpContext context)
