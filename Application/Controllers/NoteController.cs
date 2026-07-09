@@ -220,17 +220,17 @@ namespace PikaNoteAPI.Application.Controllers
             var token = HttpContext.Request.Cookies[".AspNet.Identity"]!;
             try{
                 var buckets = await this._buckets.GetBucketsForTokenAsync(token);
-            } catch(AggregateException)
-            {
-                return Forbid();
-            }
-            return Ok(
+                return Ok(
                 new ApiResponse {
                     Success = true,
                     Message = "Buckets returned successfully",
                     Payload = buckets
                 }
             ); 
+            } catch(AggregateException)
+            {
+                return Forbid();
+            }
         }
     }
 }
