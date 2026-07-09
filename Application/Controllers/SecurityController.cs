@@ -9,6 +9,7 @@ using PikaNoteAPI.Application.Filters;
 using PikaNoteAPI.Infrastructure.Services.Security;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
 
 namespace PikaNoteAPI.Application.Controllers;
 
