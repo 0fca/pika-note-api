@@ -19,9 +19,9 @@ public class SecurityController : Controller
     private readonly ISecurityService _securityService;
     private readonly ILogger<SecurityController> _logger;
     private const string DefaultCookieDomain = ".lukas-bownik.net";
-    private static readonly TimeSpan DefaultMaxAge = TimeSpan.FromMinutes(2);
-    private static readonly TimeSpan DefaultRefreshMaxAge = TimeSpan.FromDays(5);
-    private static readonly int RefreshMaxAgeSeconds = 432000;
+    private readonly TimeSpan DefaultMaxAge = TimeSpan.FromMinutes(2);
+    private readonly TimeSpan DefaultRefreshMaxAge = TimeSpan.FromDays(5);
+    private readonly int RefreshMaxAgeSeconds = 432000;
 
     public SecurityController(IConfiguration configuration, ISecurityService securityService, ILogger<SecurityController> logger)
     {
@@ -104,7 +104,7 @@ public class SecurityController : Controller
         return Ok();
     }
 
-    private static TimeSpan? GetTokenLifetime(string accessToken, int cookieBufferSeconds = 120)
+    private TimeSpan? GetTokenLifetime(string accessToken, int cookieBufferSeconds = 120)
     {
         if (cookieBufferSeconds <= 0)
         {
