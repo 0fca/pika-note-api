@@ -19,6 +19,7 @@ public class SecurityController : Controller
     private const string DefaultCookieDomain = ".lukas-bownik.net";
     private static readonly TimeSpan DefaultMaxAge = TimeSpan.FromMinutes(2);
     private static readonly TimeSpan DefaultRefreshMaxAge = TimeSpan.FromDays(5);
+    private static readonly int RefreshMaxAgeSeconds = 432000;
 
     public SecurityController(IConfiguration configuration, ISecurityService securityService)
     {
@@ -88,7 +89,7 @@ public class SecurityController : Controller
                 Secure = true,
                 SameSite = SameSiteMode.Strict,
                 Domain = _configuration["CookieDomain"] ?? DefaultCookieDomain,
-                MaxAge = GetTokenLifetime(result.NewRefreshToken) ?? DefaultRefreshMaxAge
+                MaxAge = GetTokenLifetime(result.NewRefreshToken, RefreshMaxAgeSeconds) ?? DefaultRefreshMaxAge
             };
             Response.Cookies.Append(".AspNet.Identity", result.NewAccessToken, cookieOptions);
             if (!string.IsNullOrEmpty(result.NewRefreshToken))
