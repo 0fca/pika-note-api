@@ -233,7 +233,7 @@ namespace PikaNoteAPI.Application.Controllers
             ); 
             } catch(AggregateException)
             {
-                return Forbid();
+                return Unauthorized();
             }
         }
     }
