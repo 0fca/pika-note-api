@@ -130,11 +130,15 @@ public class SecurityController : Controller
             return fallback;
         }
 
-        var iatClaim = jwt.Payload["iat"]?.ToString();
+        var iatClaim = jwt.Claims.FirstOrDefault(c => c.Type == "iat")?.Value;
         var expClaim = jwt.Claims.FirstOrDefault(c => c.Type == "exp")?.Value;
         if (!long.TryParse(iatClaim, out long iat) || !long.TryParse(expClaim, out long exp))
         {
             _logger.LogWarning("Using fallback, because of: {IssuedAt}, {ExpiredAt} could not be parsed", iatClaim, expClaim);
+            _logger.LogWarning(
+                "TEMP JWT payload dump: {JwtPayload}",
+                JsonSerializer.Serialize(jwt.Payload)
+            );
             return fallback;
         }
 
