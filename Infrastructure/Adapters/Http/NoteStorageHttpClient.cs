@@ -109,7 +109,7 @@ public class NoteStorageHttpClient : INoteStorageHttpClient
             var legibleResponse = response.EnsureSuccessStatusCode();
             return await legibleResponse.Content.ReadAsStringAsync();
         }
-        catch (HttpRequestException httpRequestException) when (httpRequestException.StatusCode == HttpStatusCode.Redirect)
+        catch (HttpRequestException httpRequestException)
         {
             return null;
         }
@@ -132,9 +132,9 @@ public class NoteStorageHttpClient : INoteStorageHttpClient
             var buckets = JsonSerializer.Deserialize<List<BucketDescriptorDTO>>(content);
             return buckets;
         }
-        catch (HttpRequestException httpRequestException) when (httpRequestException.StatusCode == HttpStatusCode.Redirect)
+        catch (HttpRequestException httpRequestException)
         {
-            return null;
+            return [];
         }
     }
 
