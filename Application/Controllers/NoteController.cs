@@ -55,7 +55,8 @@ namespace PikaNoteAPI.Application.Controllers
                 };
                 return Ok(apiResponse);
             }catch(ApplicationException){
-                return NotFound();
+                return Unauthorized();
+
             }
         }
 
