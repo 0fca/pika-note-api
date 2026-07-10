@@ -21,6 +21,7 @@ using PikaNoteAPI.Infrastructure.Adapters.Http;
 using PikaNoteAPI.Infrastructure.Adapters.Http.Repositories;
 using PikaNoteAPI.Infrastructure.Services.Chat;
 using PikaNoteAPI.Infrastructure.Services.Security;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace PikaNoteAPI
 {
@@ -36,7 +37,8 @@ namespace PikaNoteAPI
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDistributedMemoryCache();
-            services.AddAuthentication();
+            services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddCookie();
             services.Configure<CookiePolicyOptions>(options =>
             {
                 options.CheckConsentNeeded = context => true;
